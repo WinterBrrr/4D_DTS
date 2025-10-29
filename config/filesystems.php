@@ -47,6 +47,16 @@ return [
             'report' => false,
         ],
 
+        // Dedicated public disk for profile pictures
+        'avatars' => [
+            'driver' => 'local',
+            'root' => storage_path('app/avatars'),
+            'url' => env('APP_URL').'/avatars',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
@@ -75,6 +85,8 @@ return [
 
     'links' => [
         public_path('storage') => storage_path('app/public'),
+        // Symlink to serve profile pictures at /avatars/*
+        public_path('avatars') => storage_path('app/avatars'),
     ],
 
 ];

@@ -1,13 +1,13 @@
 {{-- Admin Settings Template --}}
-<x-layouts.app :title="'Admin Settings'">
+@push('head')
+<style>
+  header.sticky { display: none !important; }
+</style>
+@endpush
+<x-layouts.app :title="'Admin Settings'" :compactSidebar="true" :hideGlobalHeader="true">
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
         @include('partials.admin-sidebar')
-        
         <div class="flex-1">
-            <div class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-900">System Settings</h1>
-                <p class="text-sm text-gray-600">Configure system preferences and administrative options</p>
-            </div>
 
             <div class="space-y-6">
                 {{-- General Settings --}}
@@ -140,7 +140,13 @@
                 {{-- Security Settings --}}
                 <div class="bg-white rounded-xl p-6 shadow-sm ring-1 ring-black/5">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Security Settings</h3>
-                    <form class="space-y-4">
+                    
+                    @if(session('success'))
+                        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">{{ session('success') }}</div>
+                    @endif
+                    
+                    <form method="POST" action="{{ route('admin.settings.notifications') }}" class="space-y-4">
+                        @csrf
                         <div class="space-y-4">
                             <div class="flex items-center justify-between">
                                 <div>
@@ -148,7 +154,7 @@
                                     <p class="text-sm text-gray-500">Require 2FA for admin accounts</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" value="" class="sr-only peer" checked>
+                                    <input type="checkbox" name="two_factor_required" value="1" class="sr-only peer" {{ $settings['two_factor_required'] ? 'checked' : '' }}>
                                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                                 </label>
                             </div>
@@ -158,7 +164,7 @@
                                     <p class="text-sm text-gray-500">Send SMS alerts for urgent documents</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" value="" class="sr-only peer">
+                                    <input type="checkbox" name="sms_notifications" value="1" class="sr-only peer" {{ $settings['sms_notifications'] ? 'checked' : '' }}>
                                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                                 </label>
                             </div>
@@ -168,7 +174,7 @@
                                     <p class="text-sm text-gray-500">Receive daily processing summary</p>
                                 </div>
                                 <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" value="" class="sr-only peer" checked>
+                                    <input type="checkbox" name="daily_summary_reports" value="1" class="sr-only peer" {{ $settings['daily_summary_reports'] ? 'checked' : '' }}>
                                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
                                 </label>
                             </div>
@@ -179,31 +185,40 @@
                             </button>
                         </div>
                     </form>
+                    
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900">Setup 2FA</h4>
+                                <p class="text-sm text-gray-500">Configure two-factor authentication for your account</p>
+                            </div>
+                            <a href="{{ route('admin.2fa.setup') }}" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                                Setup 2FA
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 {{-- System Maintenance --}}
                 <div class="bg-white rounded-xl p-6 shadow-sm ring-1 ring-black/5">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">System Maintenance</h3>
                     <div class="space-y-4">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <button class="flex items-center justify-center px-4 py-3 bg-blue-600 border border-transparent rounded-lg font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                                </svg>
-                                Export Data
-                            </button>
-                            <button class="flex items-center justify-center px-4 py-3 bg-yellow-600 border border-transparent rounded-lg font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors">
-                                <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                                </svg>
-                                Clear Cache
-                            </button>
-                            <button class="flex items-center justify-center px-4 py-3 bg-green-600 border border-transparent rounded-lg font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <form method="POST" action="{{ route('admin.export.data') }}" class="inline">
+                                @csrf
+                                <button type="submit" class="w-full flex items-center justify-center px-4 py-3 bg-blue-600 border border-transparent rounded-lg font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                                    <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                    </svg>
+                                    Export Data
+                                </button>
+                            </form>
+                            <a href="{{ route('admin.system.check') }}" class="flex items-center justify-center px-4 py-3 bg-green-600 border border-transparent rounded-lg font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
                                 <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 System Check
-                            </button>
+                            </a>
                         </div>
                         <div class="pt-4 border-t border-gray-200">
                             <div class="flex items-center justify-between text-sm">
@@ -224,61 +239,4 @@
             </div>
         </div>
     </div>
-</x-layouts.app>focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-                                </label>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="text-sm font-medium text-gray-900">Session Timeout</h4>
-                                    <p class="text-sm text-gray-500">Automatically log out inactive users</p>
-                                </div>
-                                <select class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                    <option value="15">15 minutes</option>
-                                    <option value="30" selected>30 minutes</option>
-                                    <option value="60">1 hour</option>
-                                    <option value="120">2 hours</option>
-                                </select>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="text-sm font-medium text-gray-900">Login Attempts</h4>
-                                    <p class="text-sm text-gray-500">Max failed login attempts before lockout</p>
-                                </div>
-                                <select class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
-                                    <option value="3">3 attempts</option>
-                                    <option value="5" selected>5 attempts</option>
-                                    <option value="10">10 attempts</option>
-                                </select>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="text-sm font-medium text-gray-900">Audit Logging</h4>
-                                    <p class="text-sm text-gray-500">Log all admin actions</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" value="" class="sr-only peer" checked>
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="pt-4">
-                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-lg font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
-                                Save Security Settings
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                {{-- Notification Settings --}}
-                <div class="bg-white rounded-xl p-6 shadow-sm ring-1 ring-black/5">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Notification Settings</h3>
-                    <form class="space-y-4">
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <h4 class="text-sm font-medium text-gray-900">Email Notifications</h4>
-                                    <p class="text-sm text-gray-500">Send email alerts for document status changes</p>
-                                </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" value="" class="sr-only peer" checked>
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-
+</x-layouts.app>

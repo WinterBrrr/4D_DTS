@@ -4,26 +4,33 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{{ $title ?? 'App' }}</title>
+        <script>
+            // Force light mode: remove any leftover 'dark' class and stored theme
+            try { localStorage.removeItem('theme'); } catch (e) {}
+            document.documentElement.classList.remove('dark');
+        </script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="min-h-dvh bg-slate-50 text-gray-900 antialiased">
+    <body class="min-h-dvh antialiased bg-slate-50 text-gray-900">
         <div class="min-h-dvh flex flex-col">
-            <header class="border-b bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-                <div class="mx-auto w-full max-w-[1400px] px-4 py-3 flex items-center justify-between">
-                    <a href="{{ route('dashboard') }}" class="font-semibold tracking-tight">DTS</a>
-                    @if(session('logged_in'))
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button class="inline-flex items-center rounded-full bg-emerald-500 px-4 py-2 text-white text-sm hover:bg-emerald-600">Log out</button>
-                        </form>
-                    @endif
+            @if(!request()->is('login'))
+            <header class="sticky top-0 z-40 bg-white shadow-sm">
+                <div class="mx-auto w-full max-w-[1400px] px-4 py-4 flex items-center justify-between">
+                    <a href="{{ route('dashboard') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                        <img src="{{ asset('images/logo.png') }}" alt="4DOCS Logo" class="h-16 w-auto">
+                        <span class="text-3xl font-bold tracking-tight text-gray-900">4DOCS</span>
+                    </a>
+                    <div class="flex items-center gap-3"></div>
                 </div>
             </header>
+            @endif
             <main class="flex-1">
                 {{ $slot }}
             </main>
             <footer class="border-t bg-white">
-                <div class="mx-auto w-full max-w-[1400px] px-4 py-6 text-sm text-gray-500">© {{ date('Y') }} DTS</div>
+                <div class="mx-auto w-full max-w-[1400px] px-4 py-6 text-sm text-gray-500">
+                    © {{ date('Y') }} 4DOCS DOCUMENT TRACKING SYSTEM
+                </div>
             </footer>
         </div>
     </body>

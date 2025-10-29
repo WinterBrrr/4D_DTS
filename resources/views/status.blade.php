@@ -1,6 +1,17 @@
+@push('head')
+<style>
+  header.sticky { display: none !important; }
+  /* Make the page top spacing a bit larger since header is hidden */
+  main > div:first-child { margin-top: 0.5rem; }
+  body { background-color: #f8fafc; }
+  /* Optional: keep layout consistent */
+  .page-shell { max-width: 1400px; margin: 0 auto; }
+</style>
+@endpush
+
 <x-layouts.app :title="'Document Status'">
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
-        @include('partials.sidebar')
+        @include('partials.user-sidebar')
 
         <div class="flex-1 space-y-6">
             {{-- Document Header --}}

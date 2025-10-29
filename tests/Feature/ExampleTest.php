@@ -14,6 +14,8 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        // The application redirects '/' to '/login', so assert redirect behavior
+        $response->assertStatus(302);
+        $response->assertRedirect('/login');
     }
 }

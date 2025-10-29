@@ -1,22 +1,33 @@
-{{-- Enhanced Login Template --}}
 <x-layouts.app :title="'Sign In'">
-    <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            {{-- Header --}}
-            <div class="text-center">
-                <div class="mx-auto h-20 w-20 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-xl mb-6">
-                    <svg class="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
-                </div>
-                <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-                <p class="text-sm text-gray-600">Sign in to your account to continue</p>
-            </div>
-        </div>
+    <div class="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl w-full">
+            <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                    {{-- Left Side - Logo & Branding --}}
+                    <div class="bg-gradient-to-br from-emerald-500 to-teal-600 p-12 flex flex-col items-center justify-center text-white">
+                        <div class="text-center space-y-6">
+                            <div class="mx-auto h-48 w-48 bg-white rounded-3xl flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-300">
+                                <img src="{{ asset('images/logo.png') }}" alt="4DOCS Logo" class="h-44 w-44">
+                            </div>
+                            <h1 class="text-5xl font-extrabold tracking-tight">4DOCS</h1>
+                            <p class="text-xl font-light text-emerald-50">Document Tracking System</p>
+                            <div class="pt-6">
+                                <div class="h-1 w-24 bg-white/30 rounded-full mx-auto"></div>
+                            </div>
+                            <p class="text-emerald-50 text-sm leading-relaxed max-w-sm">
+                                Streamline your document workflow with our comprehensive tracking and management solution
+                            </p>
+                        </div>
+                    </div>
 
-        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-            <div class="bg-white py-8 px-6 shadow-2xl sm:rounded-2xl border border-gray-100">
-                {{-- Alert Messages --}}
+                    {{-- Right Side - Login Form --}}
+                    <div class="p-12">
+                        <div class="mb-8">
+                            <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+                            <p class="text-gray-600">Sign in to your account to continue</p>
+                        </div>
+
+                        {{-- Alert Messages --}}
                 @if(session('info'))
                     <div class="mb-6 rounded-lg bg-blue-50 p-4 border border-blue-200">
                         <div class="flex">

@@ -7,17 +7,19 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('documents', function (Blueprint $table) {
-            $table->id();
-            $table->string('code')->index();
-            $table->string('title');
-            $table->string('type');
-            $table->string('handler');
-            $table->string('department');
-            $table->string('status');
-            $table->date('expected_completion_at')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('documents')) {
+            Schema::create('documents', function (Blueprint $table) {
+                $table->id();
+                $table->string('code')->index();
+                $table->string('title');
+                $table->string('type');
+                $table->string('handler');
+                $table->string('department');
+                $table->string('status');
+                $table->date('expected_completion_at')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     public function down(): void

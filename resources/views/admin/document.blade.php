@@ -1,5 +1,10 @@
 {{-- Document View Template --}}
-<x-layouts.app :title="'Document View'">
+@push('head')
+<style>
+  header.sticky { display: none !important; }
+</style>
+@endpush
+<x-layouts.app :title="'Document View'" :compactSidebar="true" :hideGlobalHeader="true">
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
         @include('partials.admin-sidebar')
         
@@ -7,7 +12,6 @@
             {{-- Breadcrumb --}}
             <nav class="flex mb-6" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
                         <a href="{{ route('admin.dashboard') }}" class="text-gray-700 hover:text-emerald-600">Dashboard</a>
                     </li>
                     <li>
