@@ -23,37 +23,75 @@
                 </div>
             </div>
 
-            <!-- Card Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                @php $items = Session::get('uploaded_documents', []); @endphp
-                @forelse($items as $doc)
-                    <div class="rounded-3xl bg-white ring-1 ring-emerald-100 shadow-sm p-5">
-                        <div class="flex items-start justify-between">
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-900">{{ $doc['title'] }}</h3>
-                                <p class="text-xs text-gray-500">{{ $doc['id'] ?? ('DOC'.str_pad($loop->iteration,3,'0',STR_PAD_LEFT)) }}</p>
-                            </div>
-                            <a class="text-gray-400 hover:text-gray-600" href="#" title="Edit">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h2m-1-1v2m-7 9l4 4m0 0l10-10a2.828 2.828 0 00-4-4L7 14m4 4H7"/></svg>
-                            </a>
-                        </div>
-                        <div class="mt-4 space-y-2 text-xs text-gray-600">
-                            <div class="flex items-center justify-between">
-                                <span>Reviewer Assigned</span>
-                                <span>{{ now()->format('d M H:i') }}</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span>Document Creation</span>
-                                <span>{{ $doc['uploaded_at'] }}</span>
-                            </div>
-                        </div>
-                        <div class="mt-5 flex justify-end">
-                            <a href="{{ route('admin.workflow.set', 'initial') }}" class="inline-flex items-center px-5 py-2 rounded-full bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">Process</a>
-                        </div>
-                    </div>
-                @empty
-                    <div class="col-span-full text-center text-gray-500">No pending items</div>
-                @endforelse
+            <!-- Only show the table for pending documents -->
+
+
+            <!-- Table: Pending Documents -->
+            <div class="bg-white rounded-2xl shadow ring-1 ring-emerald-100 p-6">
+                <h2 class="text-lg font-semibold text-emerald-700 mb-4">Pending Documents</h2>
+                @php $pendingDocuments = $pendingDocuments ?? []; @endphp
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-emerald-100">
+                        <thead class="bg-emerald-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">ID</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Title</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Type</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Handler</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Department</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Status</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Uploader</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Date Uploaded</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-emerald-50">
+                            @forelse($pendingDocuments as $doc)
+                                <tr>
+                                    <td class="px-3 py-2 text-sm text-gray-900">{{ $doc['id'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-900">{{ $doc['title'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['type'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['handler'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['department'] }}</td>
+                                    <td class="px-3 py-2">
+                                        @php
+                                            $status = strtolower($doc['status']);
+                                            $badgeClass = [
+                                                'pending' => 'bg-amber-100 text-amber-700',
+                                                'reviewing' => 'bg-blue-100 text-blue-700',
+                                                'approved' => 'bg-green-100 text-green-700',
+                                                'rejected' => 'bg-red-100 text-red-700',
+                                                'final_processing' => 'bg-purple-100 text-purple-700',
+                                                'completed' => 'bg-emerald-100 text-emerald-700',
+                                            ][$status] ?? 'bg-gray-100 text-gray-700';
+                                            $statusSymbol = [
+                                                'pending' => '🕒',
+                                                'reviewing' => '🔎',
+                                                'approved' => '👍',
+                                                'rejected' => '❌',
+                                                'final_processing' => '📄',
+                                                'completed' => '✅',
+                                            ][$status] ?? '';
+                                        @endphp
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full font-semibold {{ $badgeClass }}">
+                                            {{ $statusSymbol }} {{ ucfirst($doc['status']) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['uploader'] ?? 'Unknown' }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['uploaded_at'] }}</td>
+                                    <td class="px-3 py-2">
+                                        <a href="{{ route('admin.documents.show', $doc['id']) }}" class="text-emerald-600 hover:underline text-xs">View</a>
+                                        <a href="{{ route('admin.workflow.set', ['stage' => 'initial']) }}" class="ml-2 text-emerald-700 hover:underline text-xs">Process</a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="10" class="px-4 py-6 text-center text-gray-500">No pending documents</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

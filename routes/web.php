@@ -471,13 +471,7 @@ Route::middleware('web')->group(function () {
         })->name('dashboard');
 
         // Document workflow pages - FIXED ROUTE NAMES
-        Route::get('/pending', function () {
-            $documents = Session::get('uploaded_documents', []);
-            $pendingDocuments = collect(array_filter($documents, fn($d) => $d['status'] === 'pending'));
-            $totalPending = $pendingDocuments->count();
-            
-            return view('admin.pending', compact('pendingDocuments', 'totalPending'));
-        })->name('pending');
+        Route::get('/pending', [App\Http\Controllers\AdminController::class, 'pending'])->name('pending');
 
         // FIXED: Changed from '/initial-review' to '/initial'
         Route::get('/initial/{document?}', function ($document = null) {

@@ -60,11 +60,27 @@
                                     <td class="px-3 py-2">{{ $doc->handler ?? '—' }}</td>
                                     <td class="px-3 py-2">{{ $doc->department }}</td>
                                     <td class="px-3 py-2">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
-                                            {{ isset($doc->status) && str_contains(strtolower($doc->status), 'complete') 
-                                                ? 'bg-emerald-100 text-emerald-700' 
-                                                : 'bg-amber-100 text-amber-700' }}">
-                                            {{ $doc->status }}
+                                        @php
+                                            $status = strtolower($doc->status);
+                                            $badgeClass = [
+                                                'pending' => 'bg-amber-100 text-amber-700',
+                                                'reviewing' => 'bg-blue-100 text-blue-700',
+                                                'approved' => 'bg-green-100 text-green-700',
+                                                'rejected' => 'bg-red-100 text-red-700',
+                                                'final_processing' => 'bg-purple-100 text-purple-700',
+                                                'completed' => 'bg-emerald-100 text-emerald-700',
+                                            ][$status] ?? 'bg-gray-100 text-gray-700';
+                                            $statusSymbol = [
+                                                'pending' => '🕒',
+                                                'reviewing' => '🔎',
+                                                'approved' => '👍',
+                                                'rejected' => '❌',
+                                                'final_processing' => '📄',
+                                                'completed' => '✅',
+                                            ][$status] ?? '';
+                                        @endphp
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full font-semibold {{ $badgeClass }}">
+                                            {{ $statusSymbol }} {{ ucfirst($doc->status) }}
                                         </span>
                                     </td>
                                     <td class="px-3 py-2">{{ $doc->expected_completion_at ?? '—' }}</td>

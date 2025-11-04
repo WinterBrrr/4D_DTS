@@ -38,6 +38,26 @@
                     <dd class="text-gray-900">{{ $doc->description ?? '—' }}</dd>
                 </div>
             </dl>
+            <!-- Document Preview Section -->
+            <div class="mt-8">
+                <h2 class="text-lg font-semibold text-emerald-700 mb-4">Document Preview</h2>
+                @php
+                    $filePath = $doc->file_path ?? null;
+                    $fileExt = $filePath ? strtolower(pathinfo($filePath, PATHINFO_EXTENSION)) : null;
+                @endphp
+                @if($filePath)
+                    @if(in_array($fileExt, ['pdf']))
+                        <iframe src="{{ asset('storage/' . $filePath) }}" class="w-full h-[600px] border rounded-lg" frameborder="0"></iframe>
+                    @elseif(in_array($fileExt, ['png', 'jpg', 'jpeg']))
+                        <img src="{{ asset('storage/' . $filePath) }}" alt="Document Image" class="max-w-full max-h-[600px] rounded-lg border" />
+                    @else
+                        <div class="text-gray-500">Preview not available for this file type.</div>
+                        <a href="{{ asset('storage/' . $filePath) }}" target="_blank" class="inline-block mt-2 px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">Download File</a>
+                    @endif
+                @else
+                    <div class="text-gray-500">No file uploaded for this document.</div>
+                @endif
+            </div>
             <div class="mt-8 flex justify-end">
                 <a href="{{ url()->previous() }}" class="inline-flex items-center px-6 py-2.5 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all duration-200">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
