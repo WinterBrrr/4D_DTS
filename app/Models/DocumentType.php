@@ -10,4 +10,9 @@ class DocumentType extends Model
     use HasFactory;
 
     protected $fillable = ['name', 'slug'];
+    
+        public function documents()
+        {
+            return $this->hasMany(Document::class, 'type_id');
+        }
 }

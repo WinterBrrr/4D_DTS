@@ -14,11 +14,15 @@
     <body class="min-h-dvh antialiased bg-slate-50 text-gray-900">
         <div class="min-h-dvh flex flex-col">
             @if(!request()->is('login'))
-            <header class="sticky top-0 z-40 bg-white shadow-sm">
-                <div class="mx-auto w-full max-w-[1400px] px-4 py-4 flex items-center justify-between">
-                    <a href="{{ route('dashboard') }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                        <img src="{{ asset('images/logo.png') }}" alt="4DOCS Logo" class="h-16 w-auto">
-                        <span class="text-3xl font-bold tracking-tight text-gray-900">4DOCS</span>
+            <header class="sticky top-0 z-40 bg-white shadow-sm" style="min-height:48px;">
+                <div class="mx-auto w-full max-w-[1400px] px-4 py-2 flex items-center justify-between">
+                    @php
+                        $role = session('user_role');
+                        $dashboardRoute = $role === 'admin' ? route('admin.dashboard') : route('dashboard');
+                    @endphp
+                    <a href="{{ $dashboardRoute }}" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                        <img src="{{ asset('images/logo.png') }}" alt="4DOCS Logo" class="h-12 w-auto">
+                        <span class="text-2xl font-bold tracking-tight text-gray-900">4DOCS</span>
                     </a>
                     <div class="flex items-center gap-3"></div>
                 </div>

@@ -24,7 +24,7 @@ class AdminMiddleware
 
         // Check if user has admin role
         if (Session::get('user_role') !== 'admin') {
-            abort(403, 'Unauthorized access to admin area. Admin privileges required.');
+            return redirect()->route('dashboard')->with('error', 'You do not have admin privileges.');
         }
 
         return $next($request);

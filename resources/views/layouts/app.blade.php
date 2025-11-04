@@ -213,7 +213,7 @@
 
         {{-- Main Content --}}
         <main class="flex-1 relative">
-            {{ $slot }}
+            @yield('content')
         </main>
 
         {{-- Footer --}}

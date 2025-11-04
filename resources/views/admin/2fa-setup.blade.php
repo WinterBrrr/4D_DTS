@@ -6,7 +6,7 @@
 
 <x-layouts.app :title="'Two-Factor Authentication Setup'">
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
-        @include('partials.admin-sidebar')
+                @include('partials.auditor-sidebar')
 
         <div class="flex-1">
             <div class="flex items-center justify-between mb-6">
@@ -14,7 +14,7 @@
                     <h1 class="text-2xl font-bold text-gray-900">Two-Factor Authentication</h1>
                     <p class="text-sm text-gray-600">Secure your admin account with TOTP</p>
                 </div>
-                <a href="{{ route('admin.dashboard') }}" class="px-3 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Back to Dashboard</a>
+                        <a href="{{ route('auditor.dashboard') }}" class="px-3 py-2 text-sm rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Back to Dashboard</a>
             </div>
 
             @if(session('success'))

@@ -40,6 +40,16 @@ class User extends Authenticatable
     {
         return $this->hasOne(UserProfile::class);
     }
+    
+        public function documents()
+        {
+            return $this->hasMany(Document::class);
+        }
+    
+        public function activityLogs()
+        {
+            return $this->hasMany(ActivityLog::class);
+        }
 }
 
 

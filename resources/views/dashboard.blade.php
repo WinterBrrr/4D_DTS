@@ -1,3 +1,4 @@
+
 @push('head')
 <style>
   /* Hide global header on dashboard for mockup parity */
@@ -8,7 +9,6 @@
 <x-layouts.app :title="'Dashboard'">
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
         @include('partials.user-sidebar')
-
         <div class="flex-1">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
@@ -17,33 +17,19 @@
                     <p class="text-sm text-gray-600 mt-1">Track and manage your documents</p>
                 </div>
                 <div class="flex items-center gap-3">
-                <form class="relative" method="GET" action="{{ route('dashboard') }}">
-                    <label for="doc-search" class="sr-only">Search documents</label>
-                    <input id="doc-search" name="q" value="{{ request('q') }}"
-                        data-target="#doc-table"
-                        class="h-10 w-64 rounded-full border border-emerald-200 bg-white/90 px-10 text-sm placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        placeholder="Search" />
-                    <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400"
-                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 3.9 12.285l3.782 3.783a.75.75 0 1 0 1.06-1.06l-3.783-3.783A6.75 6.75 0 0 0 10.5 3.75Zm-5.25 6.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Z" clip-rule="evenodd" />
-                    </svg>
-                </form>
-                @php($pUser = \App\Models\User::where('email', Session::get('user_email'))->first())
-                @php($profile = $pUser ? \App\Models\UserProfile::where('user_id', $pUser->id)->first() : null)
-                @php($photoPath = session('profile_photo_path') ?: ($profile?->profile_photo_path))
-                <a href="{{ route('profile.show') }}" title="Profile"
-                   class="relative grid place-items-center h-10 w-10 rounded-full bg-white border border-emerald-200 shadow-sm overflow-hidden">
-                    @if(!empty($photoPath))
-                        <span class="absolute inset-0" style="background: url('{{ asset('storage/'.$photoPath) }}?v={{ now()->timestamp }}') center 20% / cover no-repeat;"></span>
-                    @else
-                        <span class="text-sm font-semibold text-emerald-700 z-10">
-                            {{ strtoupper(substr(Session::get('user_name', Session::get('user_email', 'U')), 0, 1)) }}
-                        </span>
-                    @endif
-                </a>
+                    <form class="relative" method="GET" action="{{ route('dashboard') }}">
+                        <label for="doc-search" class="sr-only">Search documents</label>
+                        <input id="doc-search" name="q" value="{{ request('q') }}"
+                            data-target="#doc-table"
+                            class="h-10 w-64 rounded-full border border-emerald-200 bg-white/90 px-10 text-sm placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            placeholder="Search" />
+                        <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400"
+                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 3.9 12.285l3.782 3.783a.75.75 0 1 0 1.06-1.06l-3.783-3.783A6.75 6.75 0 0 0 10.5 3.75Zm-5.25 6.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Z" clip-rule="evenodd" />
+                        </svg>
+                    </form>
                 </div>
             </div>
-
             <!-- Stats Card (Rounded Gradient) -->
             <div class="rounded-3xl bg-gradient-to-r from-emerald-500 to-teal-600 p-8 text-white shadow-lg hover:shadow-xl transition-shadow duration-300">
                 <div class="grid grid-cols-3 gap-8 items-center">
@@ -67,7 +53,6 @@
                     Last Accessed: <span class="font-medium ml-1">{{ $stats['lastAccessedTitle'] ?? '—' }}</span>
                 </div>
             </div>
-
             <!-- Document List -->
             <div class="mt-8">
                 <div class="flex items-center justify-between mb-4">
@@ -97,20 +82,62 @@
                                     <td class="px-4 py-3 text-sm text-gray-600">{{ $doc->handler }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-600">{{ $doc->department }}</td>
                                     <td class="px-4 py-3">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold 
-                                            {{ str_contains(strtolower($doc->status), 'complete') 
-                                                ? 'bg-emerald-100 text-emerald-700' 
-                                                : 'bg-amber-100 text-amber-700' }}">
-                                            {{ $doc->status }}
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
+                                            @php
+                                                $status = strtolower($doc->status);
+                                                $badgeClass = [
+                                                    'pending' => 'bg-amber-100 text-amber-700',
+                                                    'reviewing' => 'bg-blue-100 text-blue-700',
+                                                    'processing' => 'bg-indigo-100 text-indigo-700',
+                                                    'final' => 'bg-purple-100 text-purple-700',
+                                                    'final_processing' => 'bg-purple-100 text-purple-700',
+                                                    'completed' => 'bg-emerald-100 text-emerald-700',
+                                                    'approved' => 'bg-green-100 text-green-700',
+                                                    'rejected' => 'bg-red-100 text-red-700',
+                                                ][$status] ?? 'bg-gray-100 text-gray-700';
+                                            @endphp
+                                            {{ $badgeClass }}">
+                                            @switch($status)
+                                                @case('pending')
+                                                    🕒 Pending
+                                                    @break
+                                                @case('reviewing')
+                                                    🔎 Reviewing
+                                                    @break
+                                                @case('processing')
+                                                    ⚙️ Processing
+                                                    @break
+                                                @case('final')
+                                                @case('final_processing')
+                                                    📄 Final
+                                                    @break
+                                                @case('completed')
+                                                    ✅ Completed
+                                                    @break
+                                                @case('approved')
+                                                    👍 Approved
+                                                    @break
+                                                @case('rejected')
+                                                    ❌ Rejected
+                                                    @break
+                                                @default
+                                                    {{ ucfirst($doc->status) }}
+                                            @endswitch
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-600">
                                         {{ $doc->expected_completion_at ? \Carbon\Carbon::parse($doc->expected_completion_at)->format('M d, Y') : '—' }}
                                     </td>
-                                    <td class="px-4 py-3 text-right">
-                                        <a href="#" title="Download" class="inline-flex items-center justify-center h-8 w-8 rounded-full text-emerald-600 hover:bg-emerald-50 transition-colors duration-200">
+                                        <td class="px-4 py-3 text-right flex gap-2 justify-end">
+                                        <a href="{{ asset('storage/' . $doc->file_path) }}" download title="Download" class="inline-flex items-center justify-center h-8 w-8 rounded-full text-emerald-600 hover:bg-emerald-50 transition-colors duration-200">
                                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293L18 8" />
+                                            </svg>
+                                        </a>
+                                        <a href="{{ route('inspect', $doc->id) }}" class="inline-flex items-center justify-center rounded-lg bg-blue-50 px-3 py-2 text-blue-700 hover:bg-blue-100 transition" title="Inspect Document">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                         </a>
                                     </td>
@@ -122,8 +149,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                         </svg>
                                         <p class="mt-2 text-sm font-medium text-gray-900">No documents found</p>
-                                        <p class="mt-1 text-sm text-gray-500">
-                                        Start by uploading your first document</p>
+                                        <p class="mt-1 text-sm text-gray-500">Start by uploading your first document</p>
                                     </td>
                                 </tr>
                             @endforelse
@@ -131,7 +157,6 @@
                     </table>
                 </div>
                 {{ $documents->links() }}
-            </div>
         </div>
     </div>
 </x-layouts.app>

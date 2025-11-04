@@ -14,6 +14,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // No-op: seeding disabled as requested
+        $this->call(DocumentSeeder::class);
     }
 }

@@ -59,3 +59,38 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+# 4D_DTS - Document Tracking System
+
+## Overview
+A Laravel-based Document Tracking System for managing document workflows, departments, types, users, and status logs.
+
+## Features
+- User and admin authentication
+- Document upload, status tracking, and workflow
+- Department and type management
+- User profile management
+- Activity logs
+- Admin dashboard and reports
+- Two-factor authentication (2FA) for admins
+
+## Setup
+1. Clone the repository
+2. Run `composer install` and `npm install`
+3. Copy `.env.example` to `.env` and set your database credentials
+4. Run `php artisan migrate`
+5. (Optional) Run `php artisan storage:link` for file uploads
+6. Run `npm run build` for frontend assets
+7. Start the server: `php artisan serve`
+
+## Usage
+- Register or login as user/admin
+- Upload documents and track their status
+- Admins can manage users, departments, types, and view reports
+
+## Customization
+- Edit controllers, models, and views for your workflow
+- Add more validation, notifications, or API endpoints as needed
+
+## License
+MIT

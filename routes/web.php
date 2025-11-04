@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
+use App\Http\Controllers\DocumentController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Storage;
@@ -39,8 +40,10 @@ Route::middleware('web')->group(function () {
 
     Route::post('/login', function (Request $request) {
         $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
+            'role' => ['required', 'in:student,teacher,handler,auditor'],
         ]);
 
         // Reset session to avoid role leakage between logins
@@ -49,10 +52,10 @@ Route::middleware('web')->group(function () {
         $request->session()->regenerate();
 
         // Find or create a User by email and set role
-        $userRole = ($validated['email'] === 'admin@example.com') ? 'admin' : 'user';
+        $userRole = $validated['role'];
         $user = \App\Models\User::firstOrCreate(
             ['email' => $validated['email']],
-            ['name' => $userRole === 'admin' ? 'Admin User' : 'Regular User', 'password' => bcrypt(Str::random(24)), 'role' => $userRole]
+            ['name' => $validated['name'], 'password' => bcrypt($validated['password']), 'role' => $userRole]
         );
         // If role column exists, persist role
         if (Schema::hasColumn('users', 'role') && $user->role !== $userRole) {
@@ -72,7 +75,7 @@ Route::middleware('web')->group(function () {
         ActivityLog::create([
             'user_id' => $user->id,
             'action' => 'login',
-            'details' => ['email' => $user->email],
+            'details' => ['email' => $user->email, 'role' => $userRole],
             'ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
@@ -139,6 +142,11 @@ Route::middleware('web')->group(function () {
         return view('profile.show');
     })->name('profile.show');
 
+        // Extra route for /profile/show
+        Route::get('/profile/show', function () {
+            return view('profile.show');
+        });
+
 
     // Password reset and registration
     Route::get('/password/reset', function () {
@@ -181,45 +189,18 @@ Route::middleware('web')->group(function () {
     Route::middleware([\App\Http\Middleware\CheckAuth::class])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-        Route::get('/status', function () {
-            return view('status');
-        })->name('status');
 
-        Route::get('/upload', function () {
-            return view('upload');
-        })->name('upload');
+        // Status Guide page for users
+        Route::get('/status-guide', function () {
+            return view('status_info');
+        })->name('status.guide');
 
-        Route::post('/upload', function (Request $request) {
-            $validated = $request->validate([
-                'document_type' => ['required', 'string'],
-                'department' => ['required', 'string'],
-                'title' => ['required', 'string', 'max:255'],
-                'description' => ['nullable', 'string'],
-                'file' => ['required', 'file', 'mimes:pdf,doc,docx,txt,xlsx,pptx', 'max:10240'], // 10MB max
-            ]);
 
-            $file = $request->file('file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('documents', $filename, 'local');
+        Route::get('/upload', [DocumentController::class, 'create'])->name('upload');
+        Route::post('/upload', [DocumentController::class, 'store'])->name('upload.store');
 
-            // Store document info in session (in real app, save to database)
-            $documents = Session::get('uploaded_documents', []);
-            $documents[] = [
-                'id' => count($documents) + 1,
-                'title' => $validated['title'],
-                'type' => $validated['document_type'],
-                'department' => $validated['department'],
-                'description' => $validated['description'],
-                'filename' => $filename,
-                'path' => $path,
-                'uploaded_at' => now()->format('Y-m-d H:i:s'),
-                'status' => 'pending',
-                'submitter' => Session::get('user_name', 'Unknown User')
-            ];
-            Session::put('uploaded_documents', $documents);
-
-            return back()->with('success', 'Document uploaded successfully')->with('uploaded_path', $path);
-        })->name('upload.store');
+        // Inspect document details
+        Route::get('/inspect/{document}', [DocumentController::class, 'inspect'])->name('inspect');
 
         // Profile: update personal info (saved to user_profiles)
         Route::post('/profile', function (Request $request) {

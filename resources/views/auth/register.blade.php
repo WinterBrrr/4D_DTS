@@ -3,13 +3,15 @@
     <div class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
             {{-- Header --}}
-            <div class="text-center">
-                <div class="mx-auto h-20 w-20 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-xl mb-6">
-                    <svg class="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
+            <div class="flex flex-col items-center">
+                <div class="flex items-center gap-4 mb-2">
+                    <div class="h-20 w-20 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-xl">
+                        <svg class="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900">Create your account</h2>
                 </div>
-                <h2 class="text-3xl font-bold text-gray-900 mb-2">Create your account</h2>
                 <p class="text-sm text-gray-600">Sign up to get started</p>
             </div>
         </div>
@@ -42,32 +44,44 @@
                 <form class="space-y-6" action="{{ route('login.attempt') }}" method="POST">
                     @csrf
 
+
                     <div>
                         <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
                         <input id="name" name="name" type="text" value="{{ old('name') }}"
-                            class="block w-full pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                            placeholder="Your full name" />
+                            class="block w-full pl-4 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-2"
+                            placeholder="   Your full name" />
                     </div>
 
                     <div>
                         <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
                         <input id="email" name="email" type="email" autocomplete="email" required value="{{ old('email') }}"
-                            class="block w-full pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                            placeholder="you@example.com" />
+                            class="block w-full pl-4 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-2"
+                            placeholder="   you@example.com" />
+                    </div>
+
+                    <div>
+                        <label for="role" class="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+                        <select id="role" name="role" required class="block w-full pl-4 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                            <option value="">Select role</option>
+                            <option value="student" {{ old('role') == 'student' ? 'selected' : '' }}>Student</option>
+                            <option value="teacher" {{ old('role') == 'teacher' ? 'selected' : '' }}>Teacher</option>
+                            <option value="handler" {{ old('role') == 'handler' ? 'selected' : '' }}>Handler/Staff</option>
+                            <option value="auditor" {{ old('role') == 'auditor' ? 'selected' : '' }}>Auditor</option>
+                        </select>
                     </div>
 
                     <div>
                         <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
                         <input id="password" name="password" type="password" autocomplete="new-password" required
-                            class="block w-full pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                            placeholder="Create a password" />
+                            class="block w-full pl-4 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-2"
+                            placeholder="   Create a password" />
                     </div>
 
                     <div>
                         <label for="password_confirmation" class="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
                         <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required
-                            class="block w-full pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                            placeholder="Confirm your password" />
+                            class="block w-full pl-4 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-2"
+                            placeholder="   Confirm your password" />
                     </div>
 
                     <div>

@@ -1,23 +1,3 @@
+
+
 @import 'tailwindcss';
-
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
-
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-}
-
-/* Hide the header dropdown's Sign Out button; keep sidebar/logout links available */
-header.sticky form[action$="/logout"] {
-  display: none !important;
-}
-
-/* Hide the authenticated header controls (notifications + profile dropdown) */
-header.sticky .flex.items-center.space-x-4 > .relative {
-  display: none !important;
-}
-
-/* (Dark-mode global overrides removed to keep the site always light) */
