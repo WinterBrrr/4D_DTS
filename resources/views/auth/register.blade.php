@@ -41,27 +41,27 @@
                 @endif
 
                 {{-- Register Form (demo only, posts to login to reuse demo flow) --}}
-                <form class="space-y-6" action="{{ route('login.attempt') }}" method="POST">
+                <form class="space-y-6" action="{{ route('register.attempt') }}" method="POST">
                     @csrf
 
 
                     <div>
                         <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
                         <input id="name" name="name" type="text" value="{{ old('name') }}"
-                            class="block w-full pl-4 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-2"
-                            placeholder="   Your full name" />
+                            class="block w-full pl-6 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-4"
+                            placeholder="Your full name" />
                     </div>
 
                     <div>
                         <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
                         <input id="email" name="email" type="email" autocomplete="email" required value="{{ old('email') }}"
-                            class="block w-full pl-4 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-2"
-                            placeholder="   you@example.com" />
+                            class="block w-full pl-6 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-4"
+                            placeholder="you@example.com" />
                     </div>
 
                     <div>
                         <label for="role" class="block text-sm font-semibold text-gray-700 mb-2">Role</label>
-                        <select id="role" name="role" required class="block w-full pl-4 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                        <select id="role" name="role" required class="block w-full pl-6 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
                             <option value="">Select role</option>
                             <option value="student" {{ old('role') == 'student' ? 'selected' : '' }}>Student</option>
                             <option value="teacher" {{ old('role') == 'teacher' ? 'selected' : '' }}>Teacher</option>
@@ -70,18 +70,30 @@
                         </select>
                     </div>
 
-                    <div>
+                    <div class="relative">
                         <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
                         <input id="password" name="password" type="password" autocomplete="new-password" required
-                            class="block w-full pl-4 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-2"
-                            placeholder="   Create a password" />
+                            class="block w-full pl-6 pr-10 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-4"
+                            placeholder="Create a password" />
+                        <button type="button" onclick="togglePassword('password', this)" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-emerald-600 focus:outline-none" style="top: 38px;">
+                            <svg id="password-eye" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
                     </div>
 
-                    <div>
+                    <div class="relative">
                         <label for="password_confirmation" class="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
                         <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" required
-                            class="block w-full pl-4 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-2"
-                            placeholder="   Confirm your password" />
+                            class="block w-full pl-6 pr-10 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm placeholder:pl-4"
+                            placeholder="Confirm your password" />
+                        <button type="button" onclick="togglePassword('password_confirmation', this)" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-emerald-600 focus:outline-none" style="top: 38px;">
+                            <svg id="password_confirmation-eye" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
                     </div>
 
                     <div>
@@ -97,4 +109,17 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function togglePassword(fieldId, btn) {
+            const input = document.getElementById(fieldId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.querySelector('svg').classList.add('text-emerald-600');
+            } else {
+                input.type = 'password';
+                btn.querySelector('svg').classList.remove('text-emerald-600');
+            }
+        }
+    </script>
 </x-layouts.app>

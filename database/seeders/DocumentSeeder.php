@@ -23,6 +23,7 @@ class DocumentSeeder extends Seeder
         $statuses = [
             'pending', 'reviewing', 'approved', 'rejected'
         ];
+        $user = \App\Models\User::first() ?? \App\Models\User::factory()->create();
         foreach (range(1, 10) as $i) {
             Document::create([
                 'code' => 'DOC_' . $i,
@@ -30,6 +31,7 @@ class DocumentSeeder extends Seeder
                 'type' => $types[array_rand($types)],
                 'department' => $departments[array_rand($departments)],
                 'handler' => 'User_' . $i,
+                'user_id' => $user->id,
                 'status' => $statuses[($i - 1) % count($statuses)],
                 'expected_completion_at' => now()->addDays(rand(1, 30)),
             ]);

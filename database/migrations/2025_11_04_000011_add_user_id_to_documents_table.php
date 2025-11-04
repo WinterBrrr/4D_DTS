@@ -8,7 +8,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('documents', function (Blueprint $table) {
-            $table->unsignedBigInteger('user_id')->nullable()->after('title');
+            $table->unsignedBigInteger('user_id')->after('title');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

@@ -13,18 +13,36 @@
                 </div>
             </div>
 
-            <!-- Success Message -->
+            <!-- Robust Notification System -->
+            <div id="notification-area"></div>
             @if (session('success'))
-                <div class="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800" role="alert">
-                    {{ session('success') }} — 
-                    <span class="font-medium">{{ session('uploaded_path') }}</span>
-                </div>
+                <script>
+                    window.onload = function() {
+                        showNotification("{{ session('success') }}", 'success');
+                    }
+                </script>
+            @endif
+            @if ($errors->any())
+                <script>
+                    window.onload = function() {
+                        showNotification("{{ implode('\\n', $errors->all()) }}", 'error');
+                    }
+                </script>
             @endif
             @if (session('debug'))
-                <div class="mt-4 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-800" role="alert">
-                    <strong>Debug:</strong> {{ session('debug') }}
-                </div>
+                <script>
+                    window.onload = function() {
+                        showNotification("{{ session('debug') }}", 'info');
+                    }
+                </script>
             @endif
+            <script>
+            function showNotification(message, type) {
+                const area = document.getElementById('notification-area');
+                area.innerHTML = `<div class="fixed top-6 right-6 z-50 px-6 py-4 rounded-lg shadow-lg text-white font-semibold transition-all duration-300 ${type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-gray-700'}">${message}</div>`;
+                setTimeout(() => { area.innerHTML = ''; }, 4000);
+            }
+            </script>
 
             <!-- Upload Form -->
             <form method="POST" action="{{ route('upload.store') }}" enctype="multipart/form-data" class="mt-4 space-y-6">

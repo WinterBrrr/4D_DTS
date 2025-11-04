@@ -88,6 +88,10 @@
                                     <td class="px-4 py-3">
                                         @if($u->role==='admin')
                                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Admin</span>
+                                        @elseif($u->role==='handler')
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">Handler</span>
+                                        @elseif($u->role==='auditor')
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Auditor</span>
                                         @else
                                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">User</span>
                                         @endif

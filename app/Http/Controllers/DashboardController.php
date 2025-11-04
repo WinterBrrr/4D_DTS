@@ -24,7 +24,22 @@ class DashboardController extends Controller
                 ]);
             }
         }
+        $user = null;
+        if ($email) {
+            $user = User::where('email', $email)->first();
+        }
         $query = Document::query();
+        if ($user) {
+            if ($user->role === 'admin') {
+                // Admin sees all documents
+            } else {
+                // Regular user sees only their documents
+                $query->where('user_id', $user->id);
+            }
+        } else {
+            // No user, no documents
+            $query->whereRaw('0=1');
+        }
         if ($q = trim((string) $request->query('q'))) {
             $query->where(function ($qBuilder) use ($q) {
                 $qBuilder->where('code', 'like', "%{$q}%")
@@ -38,16 +53,16 @@ class DashboardController extends Controller
 
         $documents = $query->orderByDesc('id')->paginate(10)->withQueryString();
 
-        // Dynamic stats
-        $total = Document::count();
-        $processing = Document::where(function ($qb) {
+        // Dynamic stats for user's documents only
+        $total = $query->count();
+        $processing = $query->where(function ($qb) {
             $qb->where('status', 'like', '%review%')
                ->orWhere('status', 'like', '%process%');
         })->count();
-        $completed = Document::where('status', 'like', '%complete%')->count();
+        $completed = $query->where('status', 'like', '%complete%')->count();
 
-        $lastAccessedTitle = optional(Document::orderByDesc('updated_at')->first())->title
-            ?? optional(Document::orderByDesc('id')->first())->title
+        $lastAccessedTitle = optional($query->orderByDesc('updated_at')->first())->title
+            ?? optional($query->orderByDesc('id')->first())->title
             ?? '—';
 
         return view('dashboard', [

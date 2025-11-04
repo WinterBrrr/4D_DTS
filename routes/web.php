@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\DocumentController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\DashboardController;
@@ -40,10 +41,8 @@ Route::middleware('web')->group(function () {
 
     Route::post('/login', function (Request $request) {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
-            'role' => ['required', 'in:student,teacher,handler,auditor'],
         ]);
 
         // Reset session to avoid role leakage between logins
@@ -51,21 +50,20 @@ Route::middleware('web')->group(function () {
         $request->session()->regenerateToken();
         $request->session()->regenerate();
 
-        // Find or create a User by email and set role
-        $userRole = $validated['role'];
-        $user = \App\Models\User::firstOrCreate(
-            ['email' => $validated['email']],
-            ['name' => $validated['name'], 'password' => bcrypt($validated['password']), 'role' => $userRole]
-        );
-        // If role column exists, persist role
-        if (Schema::hasColumn('users', 'role') && $user->role !== $userRole) {
-            $user->role = $userRole; $user->save();
+        // Authenticate user by email and password
+        $user = \App\Models\User::where('email', $validated['email'])->first();
+        if (!$user || !\Hash::check($validated['password'], $user->password)) {
+            return back()->withErrors(['email' => 'Invalid credentials.'])->withInput();
         }
+        $userRole = $user->role ?? 'user';
+
+        // Log in using Laravel Auth
+    Auth::login($user);
 
         // Load profile for nicer display name
         $profile = \App\Models\UserProfile::where('user_id', $user->id)->first();
 
-        // Save session
+        // Save session (for legacy code/UI)
         Session::put('logged_in', true);
         Session::put('user_email', $user->email);
         Session::put('user_role', $userRole);
@@ -89,6 +87,11 @@ Route::middleware('web')->group(function () {
             }
             return redirect()->route('admin.dashboard');
         }
+        // Auditor role: redirect to auditor dashboard
+        if ($userRole === 'auditor') {
+            return redirect()->route('auditor.dashboard');
+        }
+        // Teachers, students, handlers use the regular user dashboard
         return redirect()->route('dashboard');
     })->name('login.attempt');
 
@@ -157,6 +160,48 @@ Route::middleware('web')->group(function () {
         return view('auth.register');
     })->name('register');
 
+    Route::post('/register', function (Request $request) {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'unique:users,email'],
+            'role' => ['required', 'in:student,teacher,handler,auditor'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        // Map teacher/student to 'user', handler to 'handler', auditor to 'auditor'
+        $role = $validated['role'] === 'handler' ? 'handler' : ($validated['role'] === 'auditor' ? 'auditor' : 'user');
+
+        $user = \App\Models\User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role' => $role,
+            'password' => \Hash::make($validated['password']),
+        ]);
+
+        // Optionally create a profile
+        \App\Models\UserProfile::create([
+            'user_id' => $user->id,
+            'nickname' => $validated['name'],
+        ]);
+
+        // Log registration
+        \App\Models\ActivityLog::create([
+            'user_id' => $user->id,
+            'action' => 'register',
+            'details' => ['email' => $user->email, 'role' => $user->role],
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        // Auto-login after registration
+        Session::put('logged_in', true);
+        Session::put('user_email', $user->email);
+        Session::put('user_role', $user->role);
+        Session::put('user_name', $user->name);
+
+        return redirect()->route('dashboard');
+    })->name('register.attempt');
+
     // 2FA challenge (shown after admin login when enabled)
     Route::get('/2fa', function () {
         if (!session('2fa_user_id')) {
@@ -187,6 +232,48 @@ Route::middleware('web')->group(function () {
 
     // Protected user routes
     Route::middleware([\App\Http\Middleware\CheckAuth::class])->group(function () {
+    // Auditor status guide page
+    Route::get('/auditor/status-guide', function () {
+        return view('auditor.status_guide');
+    })->name('auditor.status.guide');
+
+    // Auditor profile page
+    Route::get('/auditor/profile', function () {
+        return view('auditor.profile');
+    })->name('auditor.profile.show');
+    // Handler document actions
+    Route::post('/handler/documents/{id}/review', [\App\Http\Controllers\HandlerController::class, 'reviewDocument'])->name('handler.documents.review');
+    Route::post('/handler/documents/{id}/comment', [\App\Http\Controllers\HandlerController::class, 'addComment'])->name('handler.documents.comment');
+    Route::post('/handler/documents/{id}/forward', [\App\Http\Controllers\HandlerController::class, 'forwardDocument'])->name('handler.documents.forward');
+    Route::post('/handler/documents/{id}/update-timeline', [\App\Http\Controllers\HandlerController::class, 'updateTimeline'])->name('handler.documents.updateTimeline');
+    // Handler dashboard route
+    Route::get('/handler/dashboard', function (Request $request) {
+        // Example stats and recent activity for handler dashboard
+        $user = Auth::user();
+        $stats = [
+            'assigned' => \App\Models\Document::where('handler', $user->name)->count(),
+            'pending' => \App\Models\Document::where('handler', $user->name)->where('status', 'pending')->count(),
+            'completed' => \App\Models\Document::where('handler', $user->name)->where('status', 'completed')->count(),
+        ];
+        $documents = \App\Models\Document::where('handler', $user->name)->orderByDesc('updated_at')->get();
+        return view('handler.dashboard', compact('stats', 'documents'));
+    })->name('handler.dashboard');
+    // Auditor dashboard route
+    Route::get('/auditor/dashboard', function (Request $request) {
+        // Example stats and recent activity for auditor dashboard
+        $stats = [
+            'total' => \App\Models\Document::count(),
+            'pending' => \App\Models\Document::where('status', 'pending')->count(),
+            'completed' => \App\Models\Document::where('status', 'completed')->count(),
+        ];
+        $recentActivity = \App\Models\Document::orderByDesc('updated_at')->limit(3)->get()->map(function ($d) {
+            return [
+                'title' => $d->title ?? $d->code ?? 'Untitled',
+                'uploaded_at' => $d->updated_at ? $d->updated_at->diffForHumans() : '-',
+            ];
+        })->toArray();
+        return view('auditor.dashboard', compact('stats', 'recentActivity'));
+    })->name('auditor.dashboard');
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 
@@ -378,8 +465,9 @@ Route::middleware('web')->group(function () {
             $stats['lastAccessedTitle'] = $last?->title ?? '—';
 
             $recentActivity = \App\Models\Document::orderByDesc('updated_at')->limit(3)->get();
+            $docs = \App\Models\Document::orderByDesc('id')->get();
 
-            return view('admin.dashboard', compact('stats', 'recentActivity'));
+            return view('admin.dashboard', compact('stats', 'recentActivity', 'docs'));
         })->name('dashboard');
 
         // Document workflow pages - FIXED ROUTE NAMES
@@ -517,14 +605,8 @@ Route::middleware('web')->group(function () {
 
         // Document management routes
         Route::get('/documents/{document}', function ($document) {
-            $documents = Session::get('uploaded_documents', []);
-            $currentDocument = collect($documents)->firstWhere('id', (int)$document);
-            
-            if (!$currentDocument) {
-                abort(404, 'Document not found');
-            }
-            
-            return view('admin.document', compact('currentDocument'));
+            $doc = \App\Models\Document::findOrFail($document);
+            return view('admin.document', ['document' => $doc]);
         })->name('documents.show');
 
         Route::post('/documents', function (Request $request) {

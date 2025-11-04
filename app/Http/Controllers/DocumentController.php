@@ -46,17 +46,22 @@ class DocumentController extends Controller
 
     public function store(Request $request)
     {
+        // Ensure user is authenticated
+        if (!Auth::check()) {
+            return redirect()->route('login')->withErrors(['auth' => 'You must be logged in to upload documents.']);
+        }
         // DEBUG: Confirm controller entry
         session()->flash('debug', 'DocumentController@store called');
-        // Validate basic fields
+        // Validate all required fields
         $validated = $request->validate([
             'title' => 'required|string|max:255',
+            'type_id' => 'required|string',
+            'department_id' => 'required|string',
             'file' => 'required|file|mimes:pdf,doc,docx,txt,xlsx,pptx,png,jpg,jpeg|max:10240',
         ]);
 
-        // Accept both admin and user form field names
-        $type = $request->input('type_id') ?: $request->input('document_type');
-        $department = $request->input('department_id') ?: $request->input('department');
+        $type = $request->input('type_id');
+        $department = $request->input('department_id');
 
         // Manual validation for type and department
         if (!in_array($type, self::$ALLOWED_TYPES)) {
