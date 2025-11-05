@@ -4,6 +4,11 @@
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
         @include('partials.admin-sidebar')
         <div class="flex-1">
+            @if(session('success'))
+                <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+                    {{ session('success') }}
+                </div>
+            @endif
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <h1 class="text-2xl font-bold text-emerald-700">Welcome to Dashboard!</h1>

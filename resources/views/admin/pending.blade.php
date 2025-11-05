@@ -81,7 +81,7 @@
                                     <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['uploaded_at'] }}</td>
                                     <td class="px-3 py-2">
                                         <a href="{{ route('admin.documents.show', $doc['id']) }}" class="text-emerald-600 hover:underline text-xs">View</a>
-                                        <a href="{{ route('admin.workflow.set', ['stage' => 'initial']) }}" class="ml-2 text-emerald-700 hover:underline text-xs">Process</a>
+                                        <a href="{{ route('admin.initial', ['document' => $doc['id']]) }}" class="ml-2 text-emerald-700 hover:underline text-xs">Process</a>
                                     </td>
                                 </tr>
                             @empty

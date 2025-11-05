@@ -480,16 +480,36 @@ Route::middleware('web')->group(function () {
         Route::get('/pending', [App\Http\Controllers\AdminController::class, 'pending'])->name('pending');
 
         // FIXED: Changed from '/initial-review' to '/initial'
+
         Route::get('/initial/{document?}', function ($document = null) {
-            $documents = Session::get('uploaded_documents', []);
             $currentDocument = null;
-            
             if ($document) {
-                $currentDocument = collect($documents)->firstWhere('id', (int)$document);
+                $currentDocument = \App\Models\Document::find($document);
             }
-            
             return view('admin.initial', compact('currentDocument'));
         })->name('initial');
+
+        // Handle initial review form submission
+        Route::post('/initial/{document}', function (Request $request, $document) {
+            $request->validate([
+                'expected_completion_at' => ['nullable', 'date'],
+                'comments' => ['required', 'string'],
+                'status' => ['required', 'in:pending,reviewing,rejected,approved'],
+            ]);
+            $doc = \App\Models\Document::findOrFail($document);
+            $doc->expected_completion_at = $request->input('expected_completion_at');
+            $doc->status = $request->input('status');
+            $doc->save();
+            // Save comment (if you have a comments table/model)
+            if (class_exists('App\\Models\\Comment')) {
+                \App\Models\Comment::create([
+                    'document_id' => $doc->id,
+                    'user_id' => optional(Auth::user())->id,
+                    'comment' => $request->input('comments'),
+                ]);
+            }
+            return redirect()->route('admin.dashboard')->with('success', 'Document updated and comment saved.');
+        })->name('initial.submit');
 
         // FIXED: Changed from '/under-review' to '/under'
         Route::get('/under/{document?}', function ($document = null) {
