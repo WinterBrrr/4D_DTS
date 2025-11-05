@@ -5,6 +5,12 @@
 </style>
 @endpush
 <x-layouts.app :title="'User Management'">
+@php
+    // Ensure $pendingUsers is always defined to avoid errors if not passed from controller
+    if (!isset($pendingUsers)) {
+        $pendingUsers = collect();
+    }
+@endphp
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
         @include('partials.admin-sidebar')
 
@@ -69,10 +75,11 @@
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Last Login</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Last Dashboard</th>
                                 <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Views</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 bg-white">
-                            @forelse($users as $u)
+                            @forelse($users->filter(fn($u) => $u->status === 'registered') as $u)
                                 @php($p = $profiles[$u->id] ?? null)
                                 @php($lastLoginAt = $lastLogin[$u->id] ?? null)
                                 @php($dash = $dashAgg[$u->id] ?? null)
@@ -99,6 +106,14 @@
                                     <td class="px-4 py-3 text-sm text-gray-500">{{ $lastLoginAt ? \Carbon\Carbon::parse($lastLoginAt)->diffForHumans() : '—' }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-500">{{ $dash?->at ? \Carbon\Carbon::parse($dash->at)->diffForHumans() : '—' }}</td>
                                     <td class="px-4 py-3 text-right text-sm font-medium text-gray-900">{{ $dash?->cnt ?? 0 }}</td>
+                                    <td class="px-4 py-3 text-right">
+                                        <a href="{{ route('admin.users.show', $u->id) }}" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-xs">View</a>
+                                        <form method="POST" action="{{ route('admin.users.delete', $u->id) }}" class="inline ml-2" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs">Delete</button>
+                                        </form>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
@@ -109,6 +124,71 @@
                     </table>
                 </div>
                 <div class="mt-4">{{ $users->links() }}</div>
+            </div>
+
+            {{-- Pending Approval Users table --}}
+            <div class="bg-white rounded-xl p-6 shadow-sm ring-1 ring-black/5 mt-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">User Pending Approval</h2>
+                    <span class="text-sm text-gray-500">{{ $pendingUsers->filter(fn($user) => $user->status === 'pending')->count() }} pending</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Role</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Registered</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 bg-white">
+                            @forelse($users->filter(fn($u) => $u->status === 'pending') as $user)
+                                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                    <td class="px-4 py-3 font-semibold text-gray-900">{{ $user->name }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">{{ $user->email }}</td>
+                                    <td class="px-4 py-3">
+                                        @if($user->role==='admin')
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">Admin</span>
+                                        @elseif($user->role==='handler')
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">Handler</span>
+                                        @elseif($user->role==='auditor')
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Auditor</span>
+                                        @else
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">User</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-500">{{ $user->created_at ? \Carbon\Carbon::parse($user->created_at)->format('M d, Y') : '—' }}</td>
+                                    <td class="px-4 py-3 text-sm">
+                                        @if($user->status === 'registered')
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Registered</span>
+                                        @elseif($user->status === 'pending')
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">Pending</span>
+                                        @else
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">{{ ucfirst($user->status) }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-right">
+                                        <form method="POST" action="{{ route('admin.users.approve', $user->id) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" class="px-3 py-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 text-xs">Approve</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('admin.users.reject', $user->id) }}" class="inline ml-2">
+                                            @csrf
+                                            <button type="submit" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs">Reject</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="px-4 py-6 text-center text-gray-500">No pending users.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div> {{-- /.flex-1 --}}

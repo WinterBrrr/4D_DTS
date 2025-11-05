@@ -17,8 +17,32 @@ class AdminController extends Controller
 
     public function users()
     {
-        $users = User::all();
-        return view('admin.users', compact('users'));
+        // Show only registered users in All Users
+        $users = User::where('status', 'registered')->orderByDesc('id')->paginate(10);
+        // Only show users with status 'pending' in Pending Approval
+        $pendingUsers = User::where('status', 'pending')->orderByDesc('id')->get();
+
+        // Load profiles and activity for All Users
+        $userIds = $users->pluck('id')->all();
+        $profiles = \App\Models\UserProfile::whereIn('user_id', $userIds)->get()->keyBy('user_id');
+        $lastLogin = \App\Models\ActivityLog::selectRaw('user_id, MAX(created_at) as at')
+            ->where('action', 'login')
+            ->whereIn('user_id', $userIds)
+            ->groupBy('user_id')->pluck('at', 'user_id');
+        $dashAgg = \App\Models\ActivityLog::selectRaw('user_id, MAX(created_at) as at, COUNT(*) as cnt')
+            ->where('action', 'dashboard.view')
+            ->whereIn('user_id', $userIds)
+            ->groupBy('user_id')->get()->keyBy('user_id');
+        $loginCount = \App\Models\ActivityLog::selectRaw('user_id, COUNT(*) as cnt')
+            ->where('action', 'login')
+            ->whereIn('user_id', $userIds)
+            ->groupBy('user_id')->pluck('cnt', 'user_id');
+
+        // Load profiles/activity for pending users if needed in the view
+        $pendingUserIds = $pendingUsers->pluck('id')->all();
+        $pendingProfiles = \App\Models\UserProfile::whereIn('user_id', $pendingUserIds)->get()->keyBy('user_id');
+
+        return view('admin.users', compact('users', 'pendingUsers', 'profiles', 'lastLogin', 'dashAgg', 'loginCount', 'pendingProfiles'));
     }
 
     public function activity()
@@ -45,5 +69,42 @@ class AdminController extends Controller
             ];
         });
         return view('admin.pending', compact('pendingDocuments', 'pendingDocumentsRaw'));
+    }
+
+    // Approve a pending user
+    public function approveUser($id)
+    {
+        $user = User::findOrFail($id);
+        if ($user->status === 'pending') {
+            $user->status = 'registered';
+            $user->save();
+        }
+        return redirect()->back()->with('success', 'User approved successfully.');
+    }
+
+    // Reject (delete) a pending user
+    public function rejectUser($id)
+    {
+        $user = User::findOrFail($id);
+        if ($user->status === 'pending') {
+            $user->delete();
+        }
+        return redirect()->back()->with('success', 'User rejected and deleted.');
+    }
+
+    // Show user details
+    public function showUser($id)
+    {
+        $user = User::findOrFail($id);
+        $profile = \App\Models\UserProfile::where('user_id', $user->id)->first();
+        return view('admin.user_show', compact('user', 'profile'));
+    }
+
+    // Delete user
+    public function deleteUser($id)
+    {
+        $user = User::findOrFail($id);
+        $user->delete();
+        return redirect()->route('admin.users')->with('success', 'User deleted successfully.');
     }
 }

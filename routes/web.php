@@ -55,10 +55,14 @@ Route::middleware('web')->group(function () {
         if (!$user || !\Hash::check($validated['password'], $user->password)) {
             return back()->withErrors(['email' => 'Invalid credentials.'])->withInput();
         }
+        // Block login if user status is 'pending'
+        if ($user->status === 'pending') {
+            return back()->withErrors(['email' => 'Your account is pending approval by an administrator.'])->withInput();
+        }
         $userRole = $user->role ?? 'user';
 
         // Log in using Laravel Auth
-    Auth::login($user);
+        Auth::login($user);
 
         // Load profile for nicer display name
         $profile = \App\Models\UserProfile::where('user_id', $user->id)->first();
@@ -171,11 +175,14 @@ Route::middleware('web')->group(function () {
         // Map teacher/student to 'user', handler to 'handler', auditor to 'auditor'
         $role = $validated['role'] === 'handler' ? 'handler' : ($validated['role'] === 'auditor' ? 'auditor' : 'user');
 
+
+        $userStatus = ($role === 'admin') ? 'registered' : 'pending';
         $user = \App\Models\User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $role,
             'password' => \Hash::make($validated['password']),
+            'status' => $userStatus,
         ]);
 
         // Optionally create a profile
@@ -193,13 +200,8 @@ Route::middleware('web')->group(function () {
             'user_agent' => $request->userAgent(),
         ]);
 
-        // Auto-login after registration
-        Session::put('logged_in', true);
-        Session::put('user_email', $user->email);
-        Session::put('user_role', $user->role);
-        Session::put('user_name', $user->name);
-
-        return redirect()->route('dashboard');
+    // Do not auto-login. Redirect to login with info message
+    return redirect()->route('login')->with('info', 'Registration successful! Your account is pending approval by an administrator. You will be able to log in once approved.');
     })->name('register.attempt');
 
     // 2FA challenge (shown after admin login when enabled)
@@ -450,6 +452,10 @@ Route::middleware('web')->group(function () {
 
     // Admin routes with proper protection
     Route::prefix('admin')->name('admin.')->middleware([\App\Http\Middleware\AdminMiddleware::class])->group(function () {
+    // Approve user
+    Route::post('/users/{id}/approve', [\App\Http\Controllers\AdminController::class, 'approveUser'])->name('users.approve');
+    // Reject user
+    Route::post('/users/{id}/reject', [\App\Http\Controllers\AdminController::class, 'rejectUser'])->name('users.reject');
         
         // Dashboard (persistent stats from documents table)
         Route::get('/dashboard', function () {
@@ -757,25 +763,15 @@ Route::middleware('web')->group(function () {
             return view('admin.reports', compact('totals', 'statusCounts', 'departmentCounts', 'recent', 'colors'));
         })->name('reports');
 
-        Route::get('/users', function () {
-            $users = \App\Models\User::orderByDesc('id')->paginate(10);
-            $userIds = $users->pluck('id')->all();
-            $profiles = \App\Models\UserProfile::whereIn('user_id', $userIds)->get()->keyBy('user_id');
-            $lastLogin = ActivityLog::selectRaw('user_id, MAX(created_at) as at')
-                ->where('action', 'login')
-                ->whereIn('user_id', $userIds)
-                ->groupBy('user_id')->pluck('at', 'user_id');
-            $dashAgg = ActivityLog::selectRaw('user_id, MAX(created_at) as at, COUNT(*) as cnt')
-                ->where('action', 'dashboard.view')
-                ->whereIn('user_id', $userIds)
-                ->groupBy('user_id')->get()->keyBy('user_id');
-            $loginCount = ActivityLog::selectRaw('user_id, COUNT(*) as cnt')
-                ->where('action', 'login')
-                ->whereIn('user_id', $userIds)
-                ->groupBy('user_id')->pluck('cnt', 'user_id');
 
-            return view('admin.users', compact('users','profiles','lastLogin','dashAgg','loginCount'));
-        })->name('users');
+        // Admin: All Users page
+        Route::get('/users', [\App\Http\Controllers\AdminController::class, 'users'])->name('users');
+
+        // Admin: View user details
+        Route::get('/users/{id}', [\App\Http\Controllers\AdminController::class, 'showUser'])->name('users.show');
+
+        // Admin: Delete user
+        Route::delete('/users/{id}', [\App\Http\Controllers\AdminController::class, 'deleteUser'])->name('users.delete');
 
         // Create user (admin User Management: Add User)
         Route::post('/users', function (Request $request) {
