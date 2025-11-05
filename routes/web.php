@@ -512,16 +512,7 @@ Route::middleware('web')->group(function () {
         })->name('initial.submit');
 
         // FIXED: Changed from '/under-review' to '/under'
-        Route::get('/under/{document?}', function ($document = null) {
-            $documents = Session::get('uploaded_documents', []);
-            $currentDocument = null;
-            
-            if ($document) {
-                $currentDocument = collect($documents)->firstWhere('id', (int)$document);
-            }
-            
-            return view('admin.under', compact('currentDocument'));
-        })->name('under');
+        Route::get('/under', [App\Http\Controllers\AdminController::class, 'under'])->name('under');
 
         // FIXED: Changed from '/final-processing' to '/final'
         Route::get('/final/{document?}', function ($document = null) {
@@ -535,12 +526,7 @@ Route::middleware('web')->group(function () {
             return view('admin.final', compact('currentDocument'));
         })->name('final');
 
-        Route::get('/completed', function () {
-            $documents = Session::get('uploaded_documents', []);
-            $completedDocuments = collect(array_filter($documents, fn($d) => $d['status'] === 'completed'));
-            
-            return view('admin.completed', compact('completedDocuments'));
-        })->name('completed');
+        Route::get('/completed', [App\Http\Controllers\AdminController::class, 'completed'])->name('completed');
 
         // Documents list (persistent, visible to admin)
         Route::get('/documents', function () {

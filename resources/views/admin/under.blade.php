@@ -1,4 +1,4 @@
-{{-- Admin Under Review --}}
+{{-- Admin Under Review (Table) --}}
 @push('head')
 <style>
   header.sticky { display: none !important; }
@@ -23,35 +23,72 @@
                 </div>
             </div>
 
-            <!-- Document Overview Form -->
-            <div class="rounded-3xl bg-white ring-1 ring-emerald-100 shadow-sm p-6">
-                <h2 class="text-lg font-medium text-gray-900 mb-4">Document Overview</h2>
-                <form class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Document Type</label>
-                        <input class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="Policy" />
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Department</label>
-                        <input class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="HR" />
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Document Title</label>
-                        <input class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" value="HR Policy 2023" />
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Description</label>
-                        <textarea rows="5" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm">The HR Policy 2023 document establishes the comprehensive framework for human resource management...</textarea>
-                    </div>
-                    <div class="md:col-span-2 flex items-center justify-between">
-                        <a class="text-emerald-700 text-sm" href="#">HR_Policy_2023.docx</a>
-                        <div class="text-emerald-700 text-sm font-medium">Expected Completion: 28 Aug</div>
-                    </div>
-                </form>
-            </div>
-
-            <div class="mt-8 flex justify-end">
-                <a href="{{ route('admin.workflow.set', 'final') }}" class="inline-flex items-center px-6 py-2 rounded-full bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">Proceed</a>
+            <!-- Table: Under Review Documents -->
+            <div class="bg-white rounded-2xl shadow ring-1 ring-emerald-100 p-6">
+                <h2 class="text-lg font-semibold text-emerald-700 mb-4">Documents Under Review</h2>
+                @php $reviewingDocuments = $reviewingDocuments ?? []; @endphp
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-emerald-100">
+                        <thead class="bg-emerald-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">ID</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Title</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Type</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Handler</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Department</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Status</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Uploader</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Date Uploaded</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-emerald-50">
+                            @forelse($reviewingDocuments as $doc)
+                                <tr>
+                                    <td class="px-3 py-2 text-sm text-gray-900">{{ $doc['id'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-900">{{ $doc['title'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['type'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['handler'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['department'] }}</td>
+                                    <td class="px-3 py-2">
+                                        @php
+                                            $status = strtolower($doc['status']);
+                                            $badgeClass = [
+                                                'pending' => 'bg-amber-100 text-amber-700',
+                                                'reviewing' => 'bg-blue-100 text-blue-700',
+                                                'approved' => 'bg-green-100 text-green-700',
+                                                'rejected' => 'bg-red-100 text-red-700',
+                                                'final_processing' => 'bg-purple-100 text-purple-700',
+                                                'completed' => 'bg-emerald-100 text-emerald-700',
+                                            ][$status] ?? 'bg-gray-100 text-gray-700';
+                                            $statusSymbol = [
+                                                'pending' => '🕒',
+                                                'reviewing' => '🔎',
+                                                'approved' => '👍',
+                                                'rejected' => '❌',
+                                                'final_processing' => '📄',
+                                                'completed' => '✅',
+                                            ][$status] ?? '';
+                                        @endphp
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full font-semibold {{ $badgeClass }}">
+                                            {{ $statusSymbol }} {{ ucfirst($doc['status']) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['uploader'] ?? 'Unknown' }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['uploaded_at'] }}</td>
+                                    <td class="px-3 py-2">
+                                        <a href="{{ route('admin.documents.show', $doc['id']) }}" class="text-emerald-600 hover:underline text-xs">View</a>
+                                        <a href="{{ route('admin.initial', ['document' => $doc['id']]) }}" class="ml-2 text-emerald-700 hover:underline text-xs">Process</a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="10" class="px-4 py-6 text-center text-gray-500">No documents under review</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

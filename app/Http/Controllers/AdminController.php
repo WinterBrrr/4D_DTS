@@ -8,6 +8,30 @@ use App\Models\ActivityLog;
 
 class AdminController extends Controller
 {
+    // ...existing code...
+
+    // ...existing code...
+    // ...existing code...
+
+    // Add under review documents view
+    public function under(Request $request)
+    {
+        $reviewingDocumentsRaw = \App\Models\Document::where('status', 'reviewing')->orderByDesc('id')->get();
+        $reviewingDocuments = $reviewingDocumentsRaw->map(function($doc) {
+            return [
+                'id' => $doc->id,
+                'title' => $doc->title,
+                'type' => $doc->type ?? '',
+                'handler' => $doc->handler ?? '',
+                'department' => $doc->department ?? '',
+                'status' => $doc->status,
+                'expected_completion_at' => $doc->expected_completion_at ?? '—',
+                'uploader' => $doc->user ? $doc->user->name : 'Unknown',
+                'uploaded_at' => $doc->created_at ? $doc->created_at->format('Y-m-d') : '',
+            ];
+        });
+        return view('admin.under', compact('reviewingDocuments', 'reviewingDocumentsRaw'));
+    }
     public function dashboard()
     {
         $users = User::all();
@@ -69,6 +93,26 @@ class AdminController extends Controller
             ];
         });
         return view('admin.pending', compact('pendingDocuments', 'pendingDocumentsRaw'));
+    }
+
+    // Add completed, rejected, and approved documents view
+    public function completed(Request $request)
+    {
+        $completedDocumentsRaw = \App\Models\Document::whereIn('status', ['completed', 'rejected', 'approved'])->orderByDesc('id')->get();
+        $completedDocuments = $completedDocumentsRaw->map(function($doc) {
+            return [
+                'id' => $doc->id,
+                'title' => $doc->title,
+                'type' => $doc->type ?? '',
+                'handler' => $doc->handler ?? '',
+                'department' => $doc->department ?? '',
+                'status' => $doc->status,
+                'expected_completion_at' => $doc->expected_completion_at ?? '—',
+                'uploader' => $doc->user ? $doc->user->name : 'Unknown',
+                'uploaded_at' => $doc->created_at ? $doc->created_at->format('Y-m-d') : '',
+            ];
+        });
+        return view('admin.completed', compact('completedDocuments', 'completedDocumentsRaw'));
     }
 
     // Approve a pending user

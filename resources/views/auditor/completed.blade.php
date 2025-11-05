@@ -1,16 +1,16 @@
-{{-- Auditor Completing (File Upload) --}}
+{{-- Auditor Completed (Table) --}}
 @push('head')
 <style>
   header.sticky { display: none !important; }
 </style>
 @endpush
-<x-layouts.app :title="'Completing'">
+<x-layouts.app :title="'Completed & Rejected Documents'">
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
         @include('partials.auditor-sidebar')
         <div class="flex-1">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
-                <h1 class="text-2xl font-bold text-emerald-700">Completing</h1>
+                <h1 class="text-2xl font-bold text-emerald-700">Completed & Rejected Documents</h1>
                 <div class="flex items-center gap-3">
                     <form class="relative" method="GET" action="{{ route('auditor.completed') }}">
                         <label for="aud-search" class="sr-only">Search</label>
@@ -23,22 +23,71 @@
                 </div>
             </div>
 
-            <!-- File Upload -->
-            <div class="rounded-3xl bg-white ring-1 ring-emerald-100 shadow-sm p-8">
-                <div class="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center cursor-pointer"
-                     ondragover="event.preventDefault()"
-                     ondrop="event.preventDefault(); this.querySelector('input[type=file]').files = event.dataTransfer.files; this.querySelector('[data-file]').textContent = event.dataTransfer.files[0].name;">
-                    <input type="file" name="file" class="hidden"
-                           onchange="this.closest('div').querySelector('[data-file]').textContent = this.files?.[0]?.name || 'Click to browse or drag and drop files here'" />
-                    <svg class="mx-auto w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    <div class="mt-2 text-sm text-gray-500" data-file>Click to browse or drag and drop files here</div>
+            <!-- Table: Completed & Rejected Documents -->
+            <div class="bg-white rounded-2xl shadow ring-1 ring-emerald-100 p-6">
+                <h2 class="text-lg font-semibold text-emerald-700 mb-4">Completed & Rejected Documents</h2>
+                @php $completedDocuments = $completedDocuments ?? []; @endphp
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-emerald-100">
+                        <thead class="bg-emerald-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">ID</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Title</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Type</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Handler</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Department</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Status</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Uploader</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Date Uploaded</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-emerald-50">
+                            @forelse($completedDocuments as $doc)
+                                <tr>
+                                    <td class="px-3 py-2 text-sm text-gray-900">{{ $doc['id'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-900">{{ $doc['title'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['type'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['handler'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['department'] }}</td>
+                                    <td class="px-3 py-2">
+                                        @php
+                                            $status = strtolower($doc['status']);
+                                            $badgeClass = [
+                                                'pending' => 'bg-amber-100 text-amber-700',
+                                                'reviewing' => 'bg-blue-100 text-blue-700',
+                                                'approved' => 'bg-green-100 text-green-700',
+                                                'rejected' => 'bg-red-100 text-red-700',
+                                                'final_processing' => 'bg-purple-100 text-purple-700',
+                                                'completed' => 'bg-emerald-100 text-emerald-700',
+                                            ][$status] ?? 'bg-gray-100 text-gray-700';
+                                            $statusSymbol = [
+                                                'pending' => '🕒',
+                                                'reviewing' => '🔎',
+                                                'approved' => '👍',
+                                                'rejected' => '❌',
+                                                'final_processing' => '📄',
+                                                'completed' => '✅',
+                                            ][$status] ?? '';
+                                        @endphp
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full font-semibold {{ $badgeClass }}">
+                                            {{ $statusSymbol }} {{ ucfirst($doc['status']) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['uploader'] ?? 'Unknown' }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['uploaded_at'] }}</td>
+                                    <td class="px-3 py-2">
+                                        <a href="#" class="text-emerald-600 hover:underline text-xs">View</a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="10" class="px-4 py-6 text-center text-gray-500">No completed or rejected documents</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-
-            <div class="mt-8 flex justify-end">
-                <a href="{{ route('auditor.completed') }}" class="inline-flex items-center px-6 py-2 rounded-full bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">Submit</a>
             </div>
         </div>
     </div>

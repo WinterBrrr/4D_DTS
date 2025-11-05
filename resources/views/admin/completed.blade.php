@@ -1,20 +1,20 @@
-{{-- Admin Completing (File Upload) --}}
+{{-- Auditor Completed (Table) --}}
 @push('head')
 <style>
   header.sticky { display: none !important; }
 </style>
 @endpush
-<x-layouts.app :title="'Completing'">
+<x-layouts.app :title="'Completed & Rejected Documents'">
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
-        @include('partials.admin-sidebar')
+    @include('partials.admin-sidebar')
         <div class="flex-1">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
-                <h1 class="text-2xl font-bold text-emerald-700">Completing</h1>
+                <h1 class="text-2xl font-bold text-emerald-700">Completed & Rejected Documents</h1>
                 <div class="flex items-center gap-3">
                     <form class="relative" method="GET" action="{{ route('admin.completed') }}">
-                        <label for="adm-search" class="sr-only">Search</label>
-                        <input id="adm-search" name="q" value="{{ request('q') }}" placeholder="Search"
+                        <label for="aud-search" class="sr-only">Search</label>
+                        <input id="aud-search" name="q" value="{{ request('q') }}" placeholder="Search"
                                class="h-10 w-64 rounded-full border border-emerald-200 bg-white px-10 text-sm placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                         <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 3.9 12.285l3.782 3.783a.75.75 0 1 0 1.06-1.06l-3.783-3.783A6.75 6.75 0 0 0 10.5 3.75Zm-5.25 6.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Z" clip-rule="evenodd" />
@@ -23,22 +23,79 @@
                 </div>
             </div>
 
-            <!-- File Upload -->
-            <div class="rounded-3xl bg-white ring-1 ring-emerald-100 shadow-sm p-8">
-                <div class="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center cursor-pointer"
-                     ondragover="event.preventDefault()"
-                     ondrop="event.preventDefault(); this.querySelector('input[type=file]').files = event.dataTransfer.files; this.querySelector('[data-file]').textContent = event.dataTransfer.files[0].name;">
-                    <input type="file" name="file" class="hidden"
-                           onchange="this.closest('div').querySelector('[data-file]').textContent = this.files?.[0]?.name || 'Click to browse or drag and drop files here'" />
-                    <svg class="mx-auto w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    <div class="mt-2 text-sm text-gray-500" data-file>Click to browse or drag and drop files here</div>
+            <!-- Table: Completed & Rejected Documents -->
+            <div class="bg-white rounded-2xl shadow ring-1 ring-emerald-100 p-6">
+                <h2 class="text-lg font-semibold text-emerald-700 mb-4">Completed & Rejected Documents</h2>
+                @php $completedDocuments = $completedDocuments ?? []; @endphp
+                <!-- Only show documents with status completed, rejected, or approved -->
+                @php
+                    $completedOrRejected = collect($completedDocuments)->filter(function($doc) {
+                        $status = strtolower($doc['status'] ?? '');
+                        return in_array($status, ['completed', 'rejected', 'approved']);
+                    });
+                @endphp
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-emerald-100">
+                        <thead class="bg-emerald-50">
+                            <tr>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">ID</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Title</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Type</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Handler</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Department</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Status</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Uploader</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Date Uploaded</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-emerald-50">
+                            @forelse($completedOrRejected as $doc)
+                                <tr>
+                                    <td class="px-3 py-2 text-sm text-gray-900">{{ $doc['id'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-900">{{ $doc['title'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['type'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['handler'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['department'] }}</td>
+                                    <td class="px-3 py-2">
+                                        @php
+                                            $status = strtolower($doc['status']);
+                                            $badgeClass = [
+                                                'pending' => 'bg-amber-100 text-amber-700',
+                                                'reviewing' => 'bg-blue-100 text-blue-700',
+                                                'approved' => 'bg-green-100 text-green-700',
+                                                'rejected' => 'bg-red-100 text-red-700',
+                                                'final_processing' => 'bg-purple-100 text-purple-700',
+                                                'completed' => 'bg-emerald-100 text-emerald-700',
+                                            ][$status] ?? 'bg-gray-100 text-gray-700';
+                                            $statusSymbol = [
+                                                'pending' => '🕒',
+                                                'reviewing' => '🔎',
+                                                'approved' => '👍',
+                                                'rejected' => '❌',
+                                                'final_processing' => '📄',
+                                                'completed' => '✅',
+                                            ][$status] ?? '';
+                                        @endphp
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full font-semibold {{ $badgeClass }}">
+                                            {{ $statusSymbol }} {{ ucfirst($doc['status']) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['uploader'] ?? 'Unknown' }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['uploaded_at'] }}</td>
+                                    <td class="px-3 py-2">
+                                        <a href="{{ route('admin.documents.show', $doc['id']) }}" class="text-emerald-600 hover:underline text-xs">View</a>
+                                        <a href="{{ route('admin.final', ['document' => $doc['id']]) }}" class="ml-2 text-emerald-700 hover:underline text-xs">Process</a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="10" class="px-4 py-6 text-center text-gray-500">No completed or rejected documents</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-
-            <div class="mt-8 flex justify-end">
-                <a href="{{ route('admin.completed') }}" class="inline-flex items-center px-6 py-2 rounded-full bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">Submit</a>
             </div>
         </div>
     </div>
