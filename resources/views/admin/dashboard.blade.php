@@ -22,6 +22,7 @@
                     </form>
                 </div>
             </div>
+            <!-- ...existing code... -->
             <!-- Stats Card -->
             <div class="rounded-3xl bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white shadow-sm">
                 <div class="grid grid-cols-3 gap-6 items-center">
@@ -62,7 +63,7 @@
                                     <td class="px-3 py-2">{{ $doc->id }}</td>
                                     <td class="px-3 py-2">{{ $doc->title }}</td>
                                     <td class="px-3 py-2">{{ $doc->type }}</td>
-                                    <td class="px-3 py-2">{{ $doc->handler ?? '—' }}</td>
+                                    <td class="px-3 py-2">{{ $doc->handler ?? '\u2014' }}</td>
                                     <td class="px-3 py-2">{{ $doc->department }}</td>
                                     <td class="px-3 py-2">
                                         @php
@@ -88,7 +89,7 @@
                                             {{ $statusSymbol }} {{ ucfirst($doc->status) }}
                                         </span>
                                     </td>
-                                    <td class="px-3 py-2">{{ $doc->expected_completion_at ?? '—' }}</td>
+                                    <td class="px-3 py-2">{{ $doc->expected_completion_at ?? '\u2014' }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -99,6 +100,7 @@
                     </table>
                 </div>
             </div>
+            <!-- ...existing code... -->
             <div class="mt-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
                 @if(isset($recentActivity) && count($recentActivity) > 0)

@@ -145,7 +145,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 bg-white">
-                            @forelse($users->filter(fn($u) => $u->status === 'pending') as $user)
+                            @forelse($pendingUsers as $user)
                                 <tr class="hover:bg-gray-50 transition-colors duration-150">
                                     <td class="px-4 py-3 font-semibold text-gray-900">{{ $user->name }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-600">{{ $user->email }}</td>

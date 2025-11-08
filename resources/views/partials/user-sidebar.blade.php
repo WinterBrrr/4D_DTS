@@ -18,15 +18,36 @@
                 </span>
                 <span class="flex-1">Dashboard</span>
             </a>
-            <a href="{{ route('user.my-documents') }}"
-               class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('user.my-documents') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">
-                <span class="flex items-center justify-center w-6 h-6">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h4m0 0V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2h2" />
-                    </svg>
-                </span>
-                <span class="flex-1">My Documents</span>
-            </a>
+            <div>
+                <div class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('user.my-documents') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600' }}">
+                    <span class="flex items-center justify-center w-6 h-6">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h4m0 0V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2h2" />
+                        </svg>
+                    </span>
+                    <span class="flex-1">My Documents</span>
+                </div>
+                <div class="space-y-1">
+                    <a href="{{ route('user.my-documents', ['tab' => 'sent']) }}"
+                       class="flex items-center pl-10 py-2 text-sm font-medium rounded-lg transition-colors {{ (request()->fullUrlIs(route('user.my-documents', ['tab' => 'sent'], false) . '*') || (!request('tab') && request()->routeIs('user.my-documents'))) ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                        <span class="flex items-center justify-center w-5 h-5 mr-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12H8m0 0l4-4m-4 4l4 4" />
+                            </svg>
+                        </span>
+                        Sent
+                    </a>
+                    <a href="{{ route('user.my-documents', ['tab' => 'received']) }}"
+                       class="flex items-center pl-10 py-2 text-sm font-medium rounded-lg transition-colors {{ request()->fullUrlIs(route('user.my-documents', ['tab' => 'received'], false) . '*') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }}">
+                        <span class="flex items-center justify-center w-5 h-5 mr-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h8m0 0l-4-4m4 4l-4 4" />
+                            </svg>
+                        </span>
+                        Received
+                    </a>
+                </div>
+            </div>
             <a href="{{ route('upload') }}" 
                class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('upload') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">
                 <span class="flex items-center justify-center w-6 h-6">

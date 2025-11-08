@@ -6,7 +6,7 @@
 
 <x-layouts.app :title="'Activity Logs'">
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
-        @include('partials.auditor-sidebar')
+    @include('partials.auditor-sidebar')
 
         <div class="flex-1">
             <div class="flex items-center justify-between mb-6">

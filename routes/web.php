@@ -1,19 +1,3 @@
-// User: My Documents page
-Route::middleware(['web', App\Http\Middleware\CheckAuth::class])->group(function () {
-    Route::get('/my-documents', function (\Illuminate\Http\Request $request) {
-        $user = Auth::user();
-        $tab = $request->query('tab', 'sent');
-        if (!in_array($tab, ['sent', 'received'])) {
-            $tab = 'sent';
-        }
-        // Sent: documents where user is uploader
-        $sentDocuments = \App\Models\Document::where('user_id', $user->id)->orderByDesc('created_at')->get();
-        // Received: documents where user is handler (by name)
-        $receivedDocuments = \App\Models\Document::where('handler', $user->name)->orderByDesc('updated_at')->get();
-        $documents = $tab === 'sent' ? $sentDocuments : $receivedDocuments;
-        return view('user.my-documents', compact('documents', 'tab'));
-    })->name('user.my-documents');
-});
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -250,6 +234,100 @@ Route::middleware('web')->group(function () {
 
     // Protected user routes
     Route::middleware([\App\Http\Middleware\CheckAuth::class])->group(function () {
+
+    // Auditor reports page (admin-level analytics, no document handling)
+    Route::get('/auditor/reports', function () {
+        $totalDocs = \App\Models\Document::count();
+        $avgDays = 0;
+        try {
+            $avgSeconds = \App\Models\Document::where('status', 'completed')
+                ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, created_at, updated_at)) as avg_seconds')
+                ->value('avg_seconds');
+            if ($avgSeconds) {
+                $avgDays = round(((float)$avgSeconds) / 86400, 1);
+            }
+        } catch (\Throwable $e) {
+            $avgDays = 0;
+        }
+        $thisMonth = \App\Models\Document::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count();
+        $lastMonth = \App\Models\Document::whereBetween('created_at', [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()])->count();
+        $monthChange = '0%';
+        if ($lastMonth > 0) {
+            $pct = round((($thisMonth - $lastMonth) / $lastMonth) * 100);
+            $monthChange = ($pct >= 0 ? '+' : '') . $pct . '%';
+        }
+        $activeUsers = \App\Models\ActivityLog::where('created_at', '>=', now()->subDays(30))
+            ->distinct('user_id')->count('user_id');
+        $totals = [
+            'documents' => $totalDocs,
+            'avg_process_time_days' => $avgDays,
+            'month_change' => $monthChange,
+            'active_users' => $activeUsers,
+        ];
+        $rawStatus = \App\Models\Document::select('status', DB::raw('COUNT(*) as c'))
+            ->groupBy('status')->pluck('c', 'status');
+        $labelMap = [
+            'pending' => 'Pending',
+            'reviewing' => 'Under Review',
+            'final_processing' => 'Final Processing',
+            'completed' => 'Completed',
+            'approved' => 'Approved',
+            'rejected' => 'Rejected',
+        ];
+        $statusCounts = [];
+        foreach ($rawStatus as $k => $v) {
+            $label = $labelMap[$k] ?? ucfirst(str_replace('_', ' ', (string)$k));
+            $statusCounts[$label] = (int) $v;
+        }
+        ksort($statusCounts);
+        $colors = [
+            'Pending' => '#eab308',
+            'Under Review' => '#3b82f6',
+            'Final Processing' => '#a855f7',
+            'Completed' => '#22c55e',
+            'Approved' => '#22d3ee',
+            'Rejected' => '#ef4444',
+        ];
+        $departmentCounts = \App\Models\Document::select('department', DB::raw('COUNT(*) as c'))
+            ->whereNotNull('department')
+            ->groupBy('department')
+            ->orderByDesc('c')
+            ->limit(5)
+            ->pluck('c', 'department')
+            ->toArray();
+        $recentDocs = \App\Models\Document::orderByDesc('updated_at')->limit(5)->get();
+        $recent = $recentDocs->map(function ($d) use ($labelMap) {
+            $label = $labelMap[$d->status] ?? ucfirst(str_replace('_', ' ', (string)$d->status));
+            return [
+                'title' => $d->title ?? $d->code ?? 'Untitled',
+                'department' => $d->department ?? '-',
+                'status' => $label,
+                'updated' => $d->updated_at ? $d->updated_at->diffForHumans() : '-',
+                'user' => '-',
+            ];
+        })->toArray();
+        return view('auditor.reports', compact('totals', 'statusCounts', 'departmentCounts', 'recent', 'colors'));
+    })->name('auditor.reports');
+    // Auditor: view all users (read-only)
+    Route::get('/auditor/users', function () {
+        $users = \App\Models\User::orderBy('name')->get();
+        return view('auditor.users', compact('users'));
+    })->name('auditor.users');
+    // My Documents page for users
+    Route::get('/my-documents', function (Request $request) {
+        $user = Auth::user();
+        $tab = $request->query('tab', 'sent');
+        if (!in_array($tab, ['sent', 'received'])) {
+            $tab = 'sent';
+        }
+        // Sent: documents where user is uploader
+        $sentDocuments = \App\Models\Document::where('user_id', $user->id)->orderByDesc('created_at')->get();
+        // Received: documents where user is handler (by name)
+        $receivedDocuments = \App\Models\Document::where('handler', $user->name)->orderByDesc('updated_at')->get();
+        $documents = $tab === 'sent' ? $sentDocuments : $receivedDocuments;
+        return view('user.my-documents', compact('documents', 'tab'));
+    })->name('user.my-documents');
+
     // Auditor status guide page
     Route::get('/auditor/status-guide', function () {
         return view('auditor.status_guide');

@@ -1,7 +1,11 @@
-{{-- User My Documents Page --}}
 @push('head')
 <style>
   header.sticky { display: none !important; }
+</style>
+@endpush
+@push('head')
+<style>
+    header.sticky { display: none !important; }
 </style>
 @endpush
 <x-layouts.app :title="'My Documents'">

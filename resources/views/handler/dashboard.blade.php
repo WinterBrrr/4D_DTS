@@ -18,21 +18,40 @@
                 </div>
             </div>
             <!-- Stats Card -->
-            <div class="rounded-3xl bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white shadow-sm">
-                <div class="grid grid-cols-3 gap-6 items-center">
+            <div class="rounded-3xl bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white shadow-sm mb-8">
+                <div class="grid grid-cols-4 gap-6 items-center">
                     <div class="text-center">
-                        <div class="text-white/85">Assigned Documents</div>
-                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['assigned'] ?? 0 }}</div>
+                        <div class="text-white/85">Total Documents</div>
+                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['total'] ?? 0 }}</div>
                     </div>
                     <div class="text-center">
                         <div class="text-white/85">Pending</div>
                         <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['pending'] ?? 0 }}</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-white/85">Completed</div>
+                        <div class="text-white/85">Reviewing</div>
+                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['reviewing'] ?? 0 }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-white/85">Completed (Approved/Rejected)</div>
                         <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['completed'] ?? 0 }}</div>
                     </div>
                 </div>
+            </div>
+            <!-- Pending Section -->
+            <div class="mb-8">
+                <h2 class="text-lg font-semibold text-amber-700 mb-2">Pending</h2>
+                @include('admin.pending', ['pendingDocuments' => $pendingDocuments ?? []])
+            </div>
+            <!-- Reviewing Section -->
+            <div class="mb-8">
+                <h2 class="text-lg font-semibold text-blue-700 mb-2">Reviewing</h2>
+                @include('admin.under', ['reviewingDocuments' => $reviewingDocuments ?? []])
+            </div>
+            <!-- Completed Section -->
+            <div class="mb-8">
+                <h2 class="text-lg font-semibold text-emerald-700 mb-2">Completed (Approved/Rejected)</h2>
+                @include('admin.completed', ['completedDocuments' => $completedDocuments ?? []])
             </div>
             <!-- Document List -->
             <div class="mt-6">
