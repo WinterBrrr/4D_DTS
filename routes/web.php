@@ -1,3 +1,19 @@
+// User: My Documents page
+Route::middleware(['web', App\Http\Middleware\CheckAuth::class])->group(function () {
+    Route::get('/my-documents', function (\Illuminate\Http\Request $request) {
+        $user = Auth::user();
+        $tab = $request->query('tab', 'sent');
+        if (!in_array($tab, ['sent', 'received'])) {
+            $tab = 'sent';
+        }
+        // Sent: documents where user is uploader
+        $sentDocuments = \App\Models\Document::where('user_id', $user->id)->orderByDesc('created_at')->get();
+        // Received: documents where user is handler (by name)
+        $receivedDocuments = \App\Models\Document::where('handler', $user->name)->orderByDesc('updated_at')->get();
+        $documents = $tab === 'sent' ? $sentDocuments : $receivedDocuments;
+        return view('user.my-documents', compact('documents', 'tab'));
+    })->name('user.my-documents');
+});
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -452,6 +468,34 @@ Route::middleware('web')->group(function () {
 
     // Admin routes with proper protection
     Route::prefix('admin')->name('admin.')->middleware([\App\Http\Middleware\AdminMiddleware::class])->group(function () {
+
+        // Handle final processing form submission
+        Route::post('/final/{document}', function (Request $request, $document) {
+            $request->validate([
+                'expected_completion_at' => ['required', 'date'],
+                'comments' => ['required', 'string'],
+                'status' => ['required', 'in:completed,rejected'],
+            ]);
+            $documents = Session::get('uploaded_documents', []);
+            foreach ($documents as &$doc) {
+                if ($doc['id'] == (int)$document) {
+                    $doc['expected_completion_at'] = $request->input('expected_completion_at');
+                    $doc['status'] = $request->input('status');
+                    // Optionally, you can add comments to a log or comments array if needed
+                    break;
+                }
+            }
+            Session::put('uploaded_documents', $documents);
+            // Save comment (if you have a comments table/model)
+            if (class_exists('App\\Models\\Comment')) {
+                \App\Models\Comment::create([
+                    'document_id' => $document,
+                    'user_id' => optional(Auth::user())->id,
+                    'comment' => $request->input('comments'),
+                ]);
+            }
+            return redirect()->route('admin.dashboard')->with('success', 'Document updated and comment saved.');
+        })->name('final.submit');
     // Approve user
     Route::post('/users/{id}/approve', [\App\Http\Controllers\AdminController::class, 'approveUser'])->name('users.approve');
     // Reject user
@@ -516,13 +560,19 @@ Route::middleware('web')->group(function () {
 
         // FIXED: Changed from '/final-processing' to '/final'
         Route::get('/final/{document?}', function ($document = null) {
-            $documents = Session::get('uploaded_documents', []);
             $currentDocument = null;
-            
             if ($document) {
+                // Try session first
+                $documents = Session::get('uploaded_documents', []);
                 $currentDocument = collect($documents)->firstWhere('id', (int)$document);
+                // If not found in session, load from DB
+                if (!$currentDocument) {
+                    $dbDoc = \App\Models\Document::find($document);
+                    if ($dbDoc) {
+                        $currentDocument = $dbDoc;
+                    }
+                }
             }
-            
             return view('admin.final', compact('currentDocument'));
         })->name('final');
 

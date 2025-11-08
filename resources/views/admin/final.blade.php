@@ -10,48 +10,64 @@
         <div class="flex-1">
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
-                <h1 class="text-2xl font-bold text-emerald-700">Final Processing</h1>
-                <div class="flex items-center gap-3">
-                    <form class="relative" method="GET" action="{{ route('admin.final') }}">
-                        <label for="adm-search" class="sr-only">Search</label>
-                        <input id="adm-search" name="q" value="{{ request('q') }}" placeholder="Search"
-                               class="h-10 w-64 rounded-full border border-emerald-200 bg-white px-10 text-sm placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
-                        <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                            <path fill-rule="evenodd" d="M10.5 3.75a6.75 6.75 0 1 0 3.9 12.285l3.782 3.783a.75.75 0 1 0 1.06-1.06l-3.783-3.783A6.75 6.75 0 0 0 10.5 3.75Zm-5.25 6.75a5.25 5.25 0 1 1 10.5 0 5.25 5.25 0 0 1-10.5 0Z" clip-rule="evenodd" />
-                        </svg>
-                    </form>
-                </div>
+                <h1 class="text-2xl font-bold text-emerald-700">Final Processing of the Document</h1>
             </div>
 
             <!-- Document Overview Form -->
             <div class="rounded-3xl bg-white ring-1 ring-emerald-100 shadow-sm p-6">
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Document Overview</h2>
-                <form class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <form class="grid grid-cols-1 md:grid-cols-2 gap-4" method="POST" action="{{ isset($currentDocument) ? route('admin.final.submit', is_array($currentDocument) ? $currentDocument['id'] : $currentDocument->id) : '#' }}">
+                    @csrf
+            @if(session('success'))
+                <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+                    {{ session('success') }}
+                </div>
+            @endif
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Document Type</label>
-                        <input class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="Policy" />
+                        <input class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="{{ $currentDocument?->type ?? '' }}" readonly disabled />
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Department</label>
-                        <input class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="HR" />
+                        <input class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="{{ $currentDocument?->department ?? '' }}" readonly disabled />
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-xs font-medium text-gray-600 mb-1">Document Title</label>
-                        <input class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" value="HR Policy 2023" />
+                        <input class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="{{ $currentDocument?->title ?? '' }}" readonly disabled />
                     </div>
                     <div class="md:col-span-2">
                         <label class="block text-xs font-medium text-gray-600 mb-1">Description</label>
-                        <textarea rows="5" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm">The HR Policy 2023 document establishes the comprehensive framework for human resource management...</textarea>
+                        <textarea rows="5" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" readonly disabled>{{ $currentDocument?->description ?? '' }}</textarea>
                     </div>
                     <div class="md:col-span-2 flex items-center justify-between">
-                        <a class="text-emerald-700 text-sm" href="#">HR_Policy_2023.docx</a>
-                        <div class="text-emerald-700 text-sm font-medium">Expected Completion: 28 Aug</div>
+                        <div>
+                        @if(!empty($currentDocument?->file_path))
+                            <a class="text-emerald-700 text-sm font-medium hover:underline" href="{{ asset('storage/' . $currentDocument->file_path) }}" target="_blank">View Document</a>
+                        @else
+                            <span class="text-gray-400 text-sm">No file</span>
+                        @endif
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="block text-xs font-medium text-gray-600">Expected Completion Date <span class="text-red-500">*</span></label>
+                            <input type="date" name="expected_completion_at" class="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="{{ $currentDocument?->expected_completion_at ?? '' }}" required />
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2 mt-4">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Comments <span class="text-red-500">*</span></label>
+                        <textarea name="comments" rows="3" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" required placeholder="Enter your comments here..."></textarea>
+                    </div>
+                    <div class="md:col-span-2 mt-4">
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Change Status <span class="text-red-500">*</span></label>
+                        <select name="status" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" required>
+                            <option value="completed" {{ $currentDocument?->status === 'completed' ? 'selected' : '' }}>Completed</option>
+                            <option value="rejected" {{ $currentDocument?->status === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end mt-2 md:mt-0 md:col-span-2">
+                        <button type="submit" class="inline-flex items-center px-6 py-2 rounded-full bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">Confirm</button>
                     </div>
                 </form>
-            </div>
-
-            <div class="mt-8 flex justify-end">
-                <a href="{{ route('admin.workflow.set', 'completed') }}" class="inline-flex items-center px-6 py-2 rounded-full bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">Proceed</a>
             </div>
         </div>
     </div>

@@ -18,6 +18,7 @@
 
         {{-- Navigation Menu --}}
         <nav class="space-y-1">
+
             <a href="{{ route('admin.dashboard') }}" 
                class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.dashboard') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">
                 <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,56 +28,56 @@
                 Dashboard
             </a>
 
-            <a href="{{ route('admin.pending') }}" 
-               class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.pending') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">
-                <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Pending Documents
-                @php
-                    $pendingCount = Session::get('uploaded_documents', []);
-                    $pendingCount = count(array_filter($pendingCount, fn($d) => $d['status'] === 'pending'));
-                @endphp
-                @if($pendingCount > 0)
-                    <span class="ml-auto inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        {{ $pendingCount }}
-                    </span>
-                @endif
-            </a>
+            <div>
+                <a href="{{ route('admin.pending') }}" 
+                   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.pending') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">
+                    <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Pending Documents
+                    @php
+                        $pendingCount = Session::get('uploaded_documents', []);
+                        $pendingCount = count(array_filter($pendingCount, fn($d) => $d['status'] === 'pending'));
+                    @endphp
+                    @if($pendingCount > 0)
+                        <span class="ml-auto inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            {{ $pendingCount }}
+                        </span>
+                    @endif
+                </a>
+                <div class="flex items-center pl-10 py-2 text-sm font-medium rounded-lg select-none {{ request()->routeIs('admin.initial') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-500' }}">
+                    <svg class="mr-3 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    Initial Review
+                </div>
+            </div>
 
-            <a href="{{ route('admin.initial') }}" 
-               class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.initial') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">
-                <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                </svg>
-                Initial Review
-            </a>
-
-            <a href="{{ route('admin.under') }}" 
-               class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.under') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">
-                <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-                Under Review
-                @php
-                    $reviewingCount = Session::get('uploaded_documents', []);
-                    $reviewingCount = count(array_filter($reviewingCount, fn($d) => $d['status'] === 'reviewing'));
-                @endphp
-                @if($reviewingCount > 0)
-                    <span class="ml-auto inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {{ $reviewingCount }}
-                    </span>
-                @endif
-            </a>
-
-            <a href="{{ route('admin.final') }}" 
-               class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.final') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">
-                <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Final Processing
-            </a>
+            <div>
+                <a href="{{ route('admin.under') }}" 
+                   class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.under') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">
+                    <svg class="mr-3 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    Under Review
+                    @php
+                        $reviewingCount = Session::get('uploaded_documents', []);
+                        $reviewingCount = count(array_filter($reviewingCount, fn($d) => $d['status'] === 'reviewing'));
+                    @endphp
+                    @if($reviewingCount > 0)
+                        <span class="ml-auto inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {{ $reviewingCount }}
+                        </span>
+                    @endif
+                </a>
+                <div class="flex items-center pl-10 py-2 text-sm font-medium rounded-lg select-none {{ request()->routeIs('admin.final') ? 'bg-emerald-50 text-emerald-700' : 'text-gray-500' }}">
+                    <svg class="mr-3 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Final Processing
+                </div>
+            </div>
 
             <a href="{{ route('admin.completed') }}" 
                class="flex items-center px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('admin.completed') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">

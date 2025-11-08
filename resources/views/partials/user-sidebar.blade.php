@@ -18,6 +18,15 @@
                 </span>
                 <span class="flex-1">Dashboard</span>
             </a>
+            <a href="{{ route('user.my-documents') }}"
+               class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('user.my-documents') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">
+                <span class="flex items-center justify-center w-6 h-6">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h4m0 0V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2h2" />
+                    </svg>
+                </span>
+                <span class="flex-1">My Documents</span>
+            </a>
             <a href="{{ route('upload') }}" 
                class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg {{ request()->routeIs('upload') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900' }} transition-colors">
                 <span class="flex items-center justify-center w-6 h-6">

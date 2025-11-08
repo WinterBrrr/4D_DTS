@@ -48,8 +48,8 @@
                         @endif
                         </div>
                         <div class="flex items-center gap-2">
-                            <label class="block text-xs font-medium text-gray-600">Expected Completion Date</label>
-                            <input type="date" name="expected_completion_at" class="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="{{ $currentDocument?->expected_completion_at ?? '' }}" />
+                            <label class="block text-xs font-medium text-gray-600">Expected Completion Date <span class="text-red-500">*</span></label>
+                            <input type="date" name="expected_completion_at" class="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="{{ $currentDocument?->expected_completion_at ?? '' }}" required />
                         </div>
                     </div>
 
@@ -58,12 +58,11 @@
                         <textarea name="comments" rows="3" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" required placeholder="Enter your comments here..."></textarea>
                     </div>
                     <div class="md:col-span-2 mt-4">
-                        <label class="block text-xs font-medium text-gray-600 mb-1">Change Status</label>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Change Status <span class="text-red-500">*</span></label>
                         <select name="status" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" required>
-                            <option value="pending" {{ $currentDocument?->status === 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="reviewing" {{ $currentDocument?->status === 'reviewing' ? 'selected' : '' }}>Reviewing</option>
-                            <option value="rejected" {{ $currentDocument?->status === 'rejected' ? 'selected' : '' }}>Rejected</option>
                             <option value="approved" {{ $currentDocument?->status === 'approved' ? 'selected' : '' }}>Approved</option>
+                            <option value="rejected" {{ $currentDocument?->status === 'rejected' ? 'selected' : '' }}>Rejected</option>
                         </select>
                     </div>
                     <div class="flex justify-end mt-2 md:mt-0 md:col-span-2">
