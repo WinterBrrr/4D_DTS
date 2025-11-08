@@ -73,7 +73,7 @@
                         </div>
 
                         <div>
-                            <label for="department_id" class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                            <label for="department_id" class="block text-sm font-medium text-gray-700 mb-2">Send To</label>
                             <select id="department_id" name="department_id" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 @error('department_id') border-red-500 @enderror" aria-describedby="department_id-error">
                                 <option value="">Select department</option>
                                 <option value="CIT" {{ old('department_id') == 'CIT' ? 'selected' : '' }}>CIT</option>

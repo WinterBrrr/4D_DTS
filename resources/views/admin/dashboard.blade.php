@@ -67,7 +67,7 @@
                                     <td class="px-3 py-2">{{ $doc->id }}</td>
                                     <td class="px-3 py-2">{{ $doc->title }}</td>
                                     <td class="px-3 py-2">{{ $doc->type }}</td>
-                                    <td class="px-3 py-2">{{ $doc->handler ?? '\u2014' }}</td>
+                                    <td class="px-3 py-2">{{ $doc->handler ?? '—' }}</td>
                                     <td class="px-3 py-2">{{ $doc->department }}</td>
                                     <td class="px-3 py-2">
                                         @php
@@ -100,6 +100,11 @@
                                     <td colspan="7" class="px-3 py-6 text-center text-gray-500">No documents found.</td>
                                 </tr>
                             @endforelse
+                        </tbody>
+                    </table>
+                    <div class="p-4">
+                        {{ $docs->links() }}
+                    </div>
                         </tbody>
                     </table>
                 </div>

@@ -64,7 +64,7 @@ class DashboardController extends Controller
             ?? optional((clone $query)->orderByDesc('id')->first())->title
             ?? '—';
 
-        return view('dashboard', [
+    return view('user.dashboard', [
             'documents' => $documents,
             'stats' => [
                 'total' => $total,

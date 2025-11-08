@@ -41,12 +41,17 @@
                 <form method="POST" action="{{ route('admin.users.store') }}" class="grid grid-cols-1 md:grid-cols-5 gap-4">
                     @csrf
                     <input name="name" class="md:col-span-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Full Name" required>
-                    <input name="email" type="email" class="md:col-span-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Email" required>
+                    <input name="email" type="email" class="md:col-span-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Email" required autocomplete="email">
                     <select name="role" class="rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" required>
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
+                        <option value="">Select Role</option>
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="handler">Handler/Staff</option>
+                        <option value="auditor">Auditor</option>
                     </select>
                     <input name="nickname" class="md:col-span-5 rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Nickname (optional)">
+                    <input name="password" type="password" class="md:col-span-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Password" required autocomplete="new-password">
+                    <input name="password_confirmation" type="password" class="md:col-span-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Confirm Password" required autocomplete="new-password">
                     <div class="md:col-span-5 flex justify-end">
                         <button class="inline-flex items-center px-4 py-2.5 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

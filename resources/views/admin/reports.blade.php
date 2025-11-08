@@ -132,7 +132,30 @@
                             @foreach($statusCounts as $label => $count)
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center">
-                                        <div class="w-4 h-4 rounded mr-3" style="background-color: {{ $colors[$label] ?? '#e5e7eb' }}"></div>
+                                        @php
+                                            $color = $colors[$label] ?? '#e5e7eb';
+                                            $border = '';
+                                            if ($label === 'Approved') {
+                                                $color = '#22c55e'; // green
+                                                $border = 'border border-green-500';
+                                            } elseif ($label === 'Rejected') {
+                                                $color = '#ef4444'; // red
+                                                $border = 'border border-red-500';
+                                            } elseif ($label === 'Pending') {
+                                                $color = '#eab308'; // yellow
+                                                $border = 'border border-yellow-500';
+                                            } elseif ($label === 'Under Review') {
+                                                $color = '#3b82f6'; // blue
+                                                $border = 'border border-blue-500';
+                                            } elseif ($label === 'Final Processing') {
+                                                $color = '#a855f7'; // purple
+                                                $border = 'border border-purple-500';
+                                            } elseif ($label === 'Completed') {
+                                                $color = '#22c55e'; // green
+                                                $border = 'border border-green-500';
+                                            }
+                                        @endphp
+                                        <div class="w-4 h-4 rounded mr-3 {{ $border }}" style="background-color: {{ $color }}"></div>
                                         <span class="text-sm text-gray-700">{{ $label }}</span>
                                     </div>
                                     <span class="text-sm font-medium text-gray-900">{{ $count }}</span>

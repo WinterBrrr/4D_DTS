@@ -24,7 +24,7 @@ class DocumentController extends Controller
      */
     public function inspect(Document $document)
     {
-        return view('inspect', ['document' => $document]);
+    return view('user.inspect', ['document' => $document]);
     }
 
     public function index()
@@ -41,7 +41,7 @@ class DocumentController extends Controller
         if (auth()->check() && auth()->user()->role === 'admin') {
             return view('admin.upload', compact('departments', 'types'));
         }
-        return view('upload_user', compact('departments', 'types'));
+    return view('user.upload_user', compact('departments', 'types'));
     }
 
     public function store(Request $request)

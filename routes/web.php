@@ -137,7 +137,7 @@ Route::middleware('web')->group(function () {
     })->name('admin.workflow.set');
 
     Route::get('/support', function () {
-        return view('support');
+        return view('user.support');
     })->name('support');
 
     // Provide a settings link target; redirect to admin settings if admin, else dashboard
@@ -239,31 +239,14 @@ Route::middleware('web')->group(function () {
     // Protected user routes
     Route::middleware([\App\Http\Middleware\CheckAuth::class])->group(function () {
 
-    // Handler workflow routes (Pending, Initial Review, Under Review, Final Processing, Completed)
-    Route::get('/handler/pending', function () {
-        // TODO: Replace with controller logic if needed
-        return view('handler.pending');
-    })->name('handler.pending');
 
-    Route::get('/handler/initial', function () {
-        // TODO: Replace with controller logic if needed
-        return view('handler.initial');
-    })->name('handler.initial');
-
-    Route::get('/handler/under', function () {
-        // TODO: Replace with controller logic if needed
-        return view('handler.under');
-    })->name('handler.under');
-
-    Route::get('/handler/final', function () {
-        // TODO: Replace with controller logic if needed
-        return view('handler.final');
-    })->name('handler.final');
-
-    Route::get('/handler/completed', function () {
-        // TODO: Replace with controller logic if needed
-        return view('handler.completed');
-    })->name('handler.completed');
+    // Handler workflow routes (controller-based)
+    Route::get('/handler/dashboard', [\App\Http\Controllers\HandlerController::class, 'dashboard'])->name('handler.dashboard');
+    Route::get('/handler/pending', [\App\Http\Controllers\HandlerController::class, 'pending'])->name('handler.pending');
+    Route::get('/handler/initial', [\App\Http\Controllers\HandlerController::class, 'initial'])->name('handler.initial');
+    Route::get('/handler/under', [\App\Http\Controllers\HandlerController::class, 'under'])->name('handler.under');
+    Route::get('/handler/final', [\App\Http\Controllers\HandlerController::class, 'final'])->name('handler.final');
+    Route::get('/handler/completed', [\App\Http\Controllers\HandlerController::class, 'completed'])->name('handler.completed');
 
     // Auditor reports page (admin-level analytics, no document handling)
     Route::get('/auditor/reports', function () {
@@ -315,8 +298,8 @@ Route::middleware('web')->group(function () {
             'Under Review' => '#3b82f6',
             'Final Processing' => '#a855f7',
             'Completed' => '#22c55e',
-            'Approved' => '#22d3ee',
-            'Rejected' => '#ef4444',
+            'Approved' => '#22c55e', // green
+            'Rejected' => '#ef4444', // red
         ];
         $departmentCounts = \App\Models\Document::select('department', DB::raw('COUNT(*) as c'))
             ->whereNotNull('department')
@@ -368,10 +351,6 @@ Route::middleware('web')->group(function () {
         return view('auditor.profile');
     })->name('auditor.profile.show');
     // Handler document actions
-    Route::post('/handler/documents/{id}/review', [\App\Http\Controllers\HandlerController::class, 'reviewDocument'])->name('handler.documents.review');
-    Route::post('/handler/documents/{id}/comment', [\App\Http\Controllers\HandlerController::class, 'addComment'])->name('handler.documents.comment');
-    Route::post('/handler/documents/{id}/forward', [\App\Http\Controllers\HandlerController::class, 'forwardDocument'])->name('handler.documents.forward');
-    Route::post('/handler/documents/{id}/update-timeline', [\App\Http\Controllers\HandlerController::class, 'updateTimeline'])->name('handler.documents.updateTimeline');
     // Handler dashboard route
     Route::get('/handler/dashboard', function (Request $request) {
         // Example stats and recent activity for handler dashboard
@@ -405,15 +384,15 @@ Route::middleware('web')->group(function () {
 
         // Status Guide page for users
         Route::get('/status-guide', function () {
-            return view('status_info');
+        return view('user.status_info');
         })->name('status.guide');
 
 
-        Route::get('/upload', [DocumentController::class, 'create'])->name('upload');
+    Route::get('/upload', [DocumentController::class, 'create'])->name('upload'); // Controller already returns user.upload_user
         Route::post('/upload', [DocumentController::class, 'store'])->name('upload.store');
 
         // Inspect document details
-        Route::get('/inspect/{document}', [DocumentController::class, 'inspect'])->name('inspect');
+    Route::get('/inspect/{document}', [DocumentController::class, 'inspect'])->name('inspect'); // Controller already returns user.inspect
 
         // Profile: update personal info (saved to user_profiles)
         Route::post('/profile', function (Request $request) {
@@ -582,22 +561,17 @@ Route::middleware('web')->group(function () {
             $request->validate([
                 'expected_completion_at' => ['required', 'date'],
                 'comments' => ['required', 'string'],
-                'status' => ['required', 'in:completed,rejected'],
+                'status' => ['required', 'in:approved,rejected'],
             ]);
-            $documents = Session::get('uploaded_documents', []);
-            foreach ($documents as &$doc) {
-                if ($doc['id'] == (int)$document) {
-                    $doc['expected_completion_at'] = $request->input('expected_completion_at');
-                    $doc['status'] = $request->input('status');
-                    // Optionally, you can add comments to a log or comments array if needed
-                    break;
-                }
-            }
-            Session::put('uploaded_documents', $documents);
+            // Update the actual Document model
+            $doc = \App\Models\Document::findOrFail($document);
+            $doc->expected_completion_at = $request->input('expected_completion_at');
+            $doc->status = $request->input('status');
+            $doc->save();
             // Save comment (if you have a comments table/model)
             if (class_exists('App\\Models\\Comment')) {
                 \App\Models\Comment::create([
-                    'document_id' => $document,
+                    'document_id' => $doc->id,
                     'user_id' => optional(Auth::user())->id,
                     'comment' => $request->input('comments'),
                 ]);
@@ -630,7 +604,7 @@ Route::middleware('web')->group(function () {
                     'uploaded_at' => $d->updated_at ? $d->updated_at->diffForHumans() : '-',
                 ];
             })->toArray();
-            $docs = \App\Models\Document::orderByDesc('id')->get();
+            $docs = \App\Models\Document::orderByDesc('id')->paginate(10);
 
             return view('admin.dashboard', compact('stats', 'recentActivity', 'docs'));
         })->name('dashboard');
@@ -647,7 +621,6 @@ Route::middleware('web')->group(function () {
             }
             return view('admin.initial', compact('currentDocument'));
         })->name('initial');
-
         // Handle initial review form submission
         Route::post('/initial/{document}', function (Request $request, $document) {
             $request->validate([
@@ -691,6 +664,7 @@ Route::middleware('web')->group(function () {
             return view('admin.final', compact('currentDocument'));
         })->name('final');
 
+// Removed stray color mapping lines causing syntax error
         Route::get('/completed', [App\Http\Controllers\AdminController::class, 'completed'])->name('completed');
 
         // Documents list (persistent, visible to admin)
@@ -949,15 +923,18 @@ Route::middleware('web')->group(function () {
             $data = $request->validate([
                 'name' => ['required','string','max:255'],
                 'email' => ['required','email','max:255','unique:users,email'],
-                'role' => ['required','in:admin,user'],
+                'role' => ['required','in:student,teacher,handler,auditor'],
                 'nickname' => ['nullable','string','max:255'],
+                'password' => ['required','string','min:8','confirmed'],
             ]);
 
+            // Map teacher/student to 'user', handler to 'handler', auditor to 'auditor'
+            $role = $data['role'] === 'handler' ? 'handler' : ($data['role'] === 'auditor' ? 'auditor' : 'user');
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
-                'role' => $data['role'],
-                'password' => bcrypt(Str::random(16)),
+                'role' => $role,
+                'password' => bcrypt($data['password']),
             ]);
 
             if (!empty($data['nickname'])) {

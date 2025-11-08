@@ -60,7 +60,7 @@
                     <div class="md:col-span-2 mt-4">
                         <label class="block text-xs font-medium text-gray-600 mb-1">Change Status <span class="text-red-500">*</span></label>
                         <select name="status" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" required>
-                            <option value="completed" {{ $currentDocument?->status === 'completed' ? 'selected' : '' }}>Completed</option>
+                            <option value="approved" {{ $currentDocument?->status === 'approved' ? 'selected' : '' }}>Approved</option>
                             <option value="rejected" {{ $currentDocument?->status === 'rejected' ? 'selected' : '' }}>Rejected</option>
                         </select>
                     </div>
