@@ -95,7 +95,11 @@ Route::middleware('web')->group(function () {
         if ($userRole === 'auditor') {
             return redirect()->route('auditor.dashboard');
         }
-        // Teachers, students, handlers use the regular user dashboard
+        // Handler role: redirect to handler dashboard
+        if ($userRole === 'handler') {
+            return redirect()->route('handler.dashboard');
+        }
+        // Teachers, students, and others use the regular user dashboard
         return redirect()->route('dashboard');
     })->name('login.attempt');
 
@@ -234,6 +238,32 @@ Route::middleware('web')->group(function () {
 
     // Protected user routes
     Route::middleware([\App\Http\Middleware\CheckAuth::class])->group(function () {
+
+    // Handler workflow routes (Pending, Initial Review, Under Review, Final Processing, Completed)
+    Route::get('/handler/pending', function () {
+        // TODO: Replace with controller logic if needed
+        return view('handler.pending');
+    })->name('handler.pending');
+
+    Route::get('/handler/initial', function () {
+        // TODO: Replace with controller logic if needed
+        return view('handler.initial');
+    })->name('handler.initial');
+
+    Route::get('/handler/under', function () {
+        // TODO: Replace with controller logic if needed
+        return view('handler.under');
+    })->name('handler.under');
+
+    Route::get('/handler/final', function () {
+        // TODO: Replace with controller logic if needed
+        return view('handler.final');
+    })->name('handler.final');
+
+    Route::get('/handler/completed', function () {
+        // TODO: Replace with controller logic if needed
+        return view('handler.completed');
+    })->name('handler.completed');
 
     // Auditor reports page (admin-level analytics, no document handling)
     Route::get('/auditor/reports', function () {
@@ -584,7 +614,8 @@ Route::middleware('web')->group(function () {
             $stats = [
                 'pending' => \App\Models\Document::where('status', 'pending')->count(),
                 'reviewing' => \App\Models\Document::where('status', 'reviewing')->count(),
-                'completed' => \App\Models\Document::where('status', 'completed')->count(),
+                'approved' => \App\Models\Document::where('status', 'approved')->count(),
+                'rejected' => \App\Models\Document::where('status', 'rejected')->count(),
                 'total' => \App\Models\Document::count(),
             ];
 
@@ -592,7 +623,13 @@ Route::middleware('web')->group(function () {
                 ?? \App\Models\Document::orderByDesc('id')->first();
             $stats['lastAccessedTitle'] = $last?->title ?? '—';
 
-            $recentActivity = \App\Models\Document::orderByDesc('updated_at')->limit(3)->get();
+            // For recent activity, keep as before
+            $recentActivity = \App\Models\Document::orderByDesc('updated_at')->limit(3)->get()->map(function ($d) {
+                return [
+                    'title' => $d->title ?? $d->code ?? 'Untitled',
+                    'uploaded_at' => $d->updated_at ? $d->updated_at->diffForHumans() : '-',
+                ];
+            })->toArray();
             $docs = \App\Models\Document::orderByDesc('id')->get();
 
             return view('admin.dashboard', compact('stats', 'recentActivity', 'docs'));

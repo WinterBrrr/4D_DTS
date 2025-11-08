@@ -53,24 +53,25 @@ class DashboardController extends Controller
 
         $documents = $query->orderByDesc('id')->paginate(10)->withQueryString();
 
-        // Dynamic stats for user's documents only
-        $total = $query->count();
-        $processing = $query->where(function ($qb) {
-            $qb->where('status', 'like', '%review%')
-               ->orWhere('status', 'like', '%process%');
-        })->count();
-        $completed = $query->where('status', 'like', '%complete%')->count();
+        // Consistent stats for user's documents only
+        $total = (clone $query)->count();
+        $pending = (clone $query)->where('status', 'pending')->count();
+        $reviewing = (clone $query)->where('status', 'reviewing')->count();
+        $approved = (clone $query)->where('status', 'approved')->count();
+        $rejected = (clone $query)->where('status', 'rejected')->count();
 
-        $lastAccessedTitle = optional($query->orderByDesc('updated_at')->first())->title
-            ?? optional($query->orderByDesc('id')->first())->title
+        $lastAccessedTitle = optional((clone $query)->orderByDesc('updated_at')->first())->title
+            ?? optional((clone $query)->orderByDesc('id')->first())->title
             ?? '—';
 
         return view('dashboard', [
             'documents' => $documents,
             'stats' => [
                 'total' => $total,
-                'processing' => $processing,
-                'completed' => $completed,
+                'pending' => $pending,
+                'reviewing' => $reviewing,
+                'approved' => $approved,
+                'rejected' => $rejected,
                 'lastAccessedTitle' => $lastAccessedTitle,
             ],
         ]);

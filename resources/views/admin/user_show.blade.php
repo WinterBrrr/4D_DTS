@@ -74,8 +74,8 @@
                                 <div class="w-full rounded-lg border border-gray-200 px-3 py-2 bg-gray-50">{{ $profile->nickname ?? '—' }}</div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Identity</label>
-                                <div class="w-full rounded-lg border border-gray-200 px-3 py-2 bg-gray-50">{{ $profile->identity ?? '—' }}</div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                <div class="w-full rounded-lg border border-gray-200 px-3 py-2 bg-gray-50">{{ ucfirst($user->role) ?? '—' }}</div>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>

@@ -25,18 +25,22 @@
             <!-- ...existing code... -->
             <!-- Stats Card -->
             <div class="rounded-3xl bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white shadow-sm">
-                <div class="grid grid-cols-3 gap-6 items-center">
-                    <div class="text-center">
-                        <div class="text-white/85">Total Documents</div>
+                <div class="flex flex-row gap-8 items-center justify-between">
+                    <div class="text-center flex-1">
+                        <div class="text-white/85 font-bold">Total Documents</div>
                         <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['total'] ?? 0 }}</div>
                     </div>
-                    <div class="text-center">
-                        <div class="text-white/85">Pending</div>
+                    <div class="text-center flex-1">
+                        <div class="text-white/85 font-bold">Pending</div>
                         <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['pending'] ?? 0 }}</div>
                     </div>
-                    <div class="text-center">
-                        <div class="text-white/85">Completed</div>
-                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['completed'] ?? 0 }}</div>
+                    <div class="text-center flex-1">
+                        <div class="text-white/85 font-bold">Reviewing</div>
+                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['reviewing'] ?? 0 }}</div>
+                    </div>
+                    <div class="text-center flex-1">
+                        <div class="text-white/85 font-bold">Completed</div>
+                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ ($stats['approved'] ?? 0) + ($stats['rejected'] ?? 0) }}</div>
                     </div>
                 </div>
                 <div class="mt-4 text-xs text-white/85 text-right">Last Accessed: {{ $recentActivity[0]['title'] ?? '—' }}</div>
@@ -89,7 +93,7 @@
                                             {{ $statusSymbol }} {{ ucfirst($doc->status) }}
                                         </span>
                                     </td>
-                                    <td class="px-3 py-2">{{ $doc->expected_completion_at ?? '\u2014' }}</td>
+                                    <td class="px-3 py-2">{{ $doc->expected_completion_at ?? '—' }}</td>
                                 </tr>
                             @empty
                                 <tr>

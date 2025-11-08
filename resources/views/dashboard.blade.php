@@ -32,18 +32,22 @@
             </div>
             <!-- Stats Card (Rounded Gradient) -->
             <div class="rounded-3xl bg-gradient-to-r from-emerald-500 to-teal-600 p-8 text-white shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <div class="grid grid-cols-3 gap-8 items-center">
-                    <div class="text-center">
-                        <div class="text-white/90 text-sm font-medium uppercase tracking-wide mb-2">Total Documents</div>
-                        <div class="text-5xl font-black drop-shadow-md">{{ $stats['total'] ?? 0 }}</div>
+                <div class="flex flex-row gap-8 items-center justify-between">
+                    <div class="text-center flex-1">
+                        <div class="text-white/85 font-bold">Total Documents</div>
+                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['total'] ?? 0 }}</div>
                     </div>
-                    <div class="text-center border-x border-white/20">
-                        <div class="text-white/90 text-sm font-medium uppercase tracking-wide mb-2">Processing</div>
-                        <div class="text-5xl font-black drop-shadow-md">{{ $stats['processing'] ?? 0 }}</div>
+                    <div class="text-center flex-1">
+                        <div class="text-white/85 font-bold">Pending</div>
+                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['pending'] ?? 0 }}</div>
                     </div>
-                    <div class="text-center">
-                        <div class="text-white/90 text-sm font-medium uppercase tracking-wide mb-2">Completed</div>
-                        <div class="text-5xl font-black drop-shadow-md">{{ $stats['completed'] ?? 0 }}</div>
+                    <div class="text-center flex-1">
+                        <div class="text-white/85 font-bold">Reviewing</div>
+                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['reviewing'] ?? 0 }}</div>
+                    </div>
+                    <div class="text-center flex-1">
+                        <div class="text-white/85 font-bold">Completed</div>
+                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ ($stats['approved'] ?? 0) + ($stats['rejected'] ?? 0) }}</div>
                     </div>
                 </div>
                 <div class="mt-6 pt-4 border-t border-white/20 text-sm text-white/90 flex items-center justify-end">
