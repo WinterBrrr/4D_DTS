@@ -95,9 +95,9 @@ Route::middleware('web')->group(function () {
         if ($userRole === 'auditor') {
             return redirect()->route('auditor.dashboard');
         }
-        // Handler role: redirect to handler dashboard
+        // Handler role: redirect to handler profile (always)
         if ($userRole === 'handler') {
-            return redirect()->route('handler.dashboard');
+            return redirect()->route('handler.profile');
         }
         // Teachers, students, and others use the regular user dashboard
         return redirect()->route('dashboard');
@@ -148,15 +148,11 @@ Route::middleware('web')->group(function () {
         return redirect()->route('dashboard');
     })->name('settings');
 
-    // Profile page
-    Route::get('/profile', function () {
-        return view('profile.show');
-    })->name('profile.show');
 
-        // Extra route for /profile/show
-        Route::get('/profile/show', function () {
-            return view('profile.show');
-        });
+    // Profile page (role-based)
+    Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'show'])->name('profile.show');
+    // Handler exclusive profile page (handler only)
+    Route::get('/handler/profile', [\App\Http\Controllers\ProfileController::class, 'showHandler'])->name('handler.profile');
 
 
     // Password reset and registration
@@ -239,21 +235,67 @@ Route::middleware('web')->group(function () {
     // Protected user routes
     Route::middleware([\App\Http\Middleware\CheckAuth::class])->group(function () {
 
+        // Handler routes that require department to be set
+        Route::middleware('require.handler.department')->group(function () {
+            // Handler exclusive: Upload Document page
+            Route::get('/handler/upload', function () {
+                return view('handler.upload');
+            })->name('handler.upload');
 
-    // Handler workflow routes (controller-based)
-    Route::get('/handler/dashboard', [\App\Http\Controllers\HandlerController::class, 'dashboard'])->name('handler.dashboard');
-    Route::get('/handler/pending', [\App\Http\Controllers\HandlerController::class, 'pending'])->name('handler.pending');
-    Route::get('/handler/initial', [\App\Http\Controllers\HandlerController::class, 'initial'])->name('handler.initial');
-    Route::get('/handler/under', [\App\Http\Controllers\HandlerController::class, 'under'])->name('handler.under');
-    Route::get('/handler/final', [\App\Http\Controllers\HandlerController::class, 'final'])->name('handler.final');
-    Route::get('/handler/completed', [\App\Http\Controllers\HandlerController::class, 'completed'])->name('handler.completed');
+            // Handler exclusive: Status Guide page
+            Route::get('/handler/status-guide', function () {
+                return view('handler.status_guide');
+            })->name('handler.status.guide');
+
+            // Handler workflow routes (controller-based)
+            Route::get('/handler/dashboard', [\App\Http\Controllers\HandlerController::class, 'dashboard'])->name('handler.dashboard');
+            Route::get('/handler/pending', [\App\Http\Controllers\HandlerController::class, 'pending'])->name('handler.pending');
+            Route::get('/handler/initial', [\App\Http\Controllers\HandlerController::class, 'initial'])->name('handler.initial');
+            Route::get('/handler/under', [\App\Http\Controllers\HandlerController::class, 'under'])->name('handler.under');
+            Route::get('/handler/final', [\App\Http\Controllers\HandlerController::class, 'final'])->name('handler.final');
+            Route::get('/handler/completed', [\App\Http\Controllers\HandlerController::class, 'completed'])->name('handler.completed');
+        });
 
     // Auditor reports page (admin-level analytics, no document handling)
     Route::get('/auditor/reports', function () {
-        $totalDocs = \App\Models\Document::count();
+        $dateRange = request('date_range', '30');
+        $department = request('department', 'all');
+        $dateFilter = null;
+        if ($dateRange === 'today') {
+            $dateFilter = [now()->startOfDay(), now()->endOfDay()];
+        } elseif ($dateRange === 'yesterday') {
+            $dateFilter = [now()->subDay()->startOfDay(), now()->subDay()->endOfDay()];
+        } elseif ($dateRange === '3') {
+            $dateFilter = [now()->subDays(2)->startOfDay(), now()->endOfDay()];
+        } elseif ($dateRange === '7') {
+            $dateFilter = [now()->subDays(6)->startOfDay(), now()->endOfDay()];
+        } elseif ($dateRange === '30') {
+            $dateFilter = [now()->subDays(29)->startOfDay(), now()->endOfDay()];
+        } elseif ($dateRange === '365') {
+            $dateFilter = [now()->subDays(364)->startOfDay(), now()->endOfDay()];
+        } elseif ($dateRange === 'all') {
+            $dateFilter = null;
+        }
+
+        $docQuery = \App\Models\Document::query();
+        if ($dateFilter) {
+            $docQuery->whereBetween('created_at', $dateFilter);
+        }
+        if ($department && $department !== 'all') {
+            $docQuery->where('department', $department);
+        }
+        $totalDocs = $docQuery->count();
+
         $avgDays = 0;
         try {
-            $avgSeconds = \App\Models\Document::where('status', 'completed')
+            $completedQuery = \App\Models\Document::where('status', 'completed');
+            if ($dateFilter) {
+                $completedQuery->whereBetween('created_at', $dateFilter);
+            }
+            if ($department && $department !== 'all') {
+                $completedQuery->where('department', $department);
+            }
+            $avgSeconds = $completedQuery
                 ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, created_at, updated_at)) as avg_seconds')
                 ->value('avg_seconds');
             if ($avgSeconds) {
@@ -262,22 +304,46 @@ Route::middleware('web')->group(function () {
         } catch (\Throwable $e) {
             $avgDays = 0;
         }
-        $thisMonth = \App\Models\Document::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count();
-        $lastMonth = \App\Models\Document::whereBetween('created_at', [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()])->count();
+
+        // Month-over-month change is not filtered by date range, but can be filtered by department
+        $thisMonthQuery = \App\Models\Document::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
+        $lastMonthQuery = \App\Models\Document::whereBetween('created_at', [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()]);
+        if ($department && $department !== 'all') {
+            $thisMonthQuery->where('department', $department);
+            $lastMonthQuery->where('department', $department);
+        }
+        $thisMonth = $thisMonthQuery->count();
+        $lastMonth = $lastMonthQuery->count();
         $monthChange = '0%';
         if ($lastMonth > 0) {
             $pct = round((($thisMonth - $lastMonth) / $lastMonth) * 100);
             $monthChange = ($pct >= 0 ? '+' : '') . $pct . '%';
         }
-        $activeUsers = \App\Models\ActivityLog::where('created_at', '>=', now()->subDays(30))
-            ->distinct('user_id')->count('user_id');
+
+        $activeUsersQuery = \App\Models\ActivityLog::where('created_at', '>=', now()->subDays(30));
+        if ($department && $department !== 'all') {
+            // Join with users to filter by department
+            $activeUsersQuery->whereHas('user', function($q) use ($department) {
+                $q->where('department', $department);
+            });
+        }
+        $activeUsers = $activeUsersQuery->distinct('user_id')->count('user_id');
+
         $totals = [
             'documents' => $totalDocs,
             'avg_process_time_days' => $avgDays,
             'month_change' => $monthChange,
             'active_users' => $activeUsers,
         ];
-        $rawStatus = \App\Models\Document::select('status', DB::raw('COUNT(*) as c'))
+
+        $statusQuery = \App\Models\Document::query();
+        if ($dateFilter) {
+            $statusQuery->whereBetween('created_at', $dateFilter);
+        }
+        if ($department && $department !== 'all') {
+            $statusQuery->where('department', $department);
+        }
+        $rawStatus = $statusQuery->select('status', DB::raw('COUNT(*) as c'))
             ->groupBy('status')->pluck('c', 'status');
         $labelMap = [
             'pending' => 'Pending',
@@ -301,14 +367,29 @@ Route::middleware('web')->group(function () {
             'Approved' => '#22c55e', // green
             'Rejected' => '#ef4444', // red
         ];
-        $departmentCounts = \App\Models\Document::select('department', DB::raw('COUNT(*) as c'))
-            ->whereNotNull('department')
+        $departmentCountsQuery = \App\Models\Document::select('department', DB::raw('COUNT(*) as c'))
+            ->whereNotNull('department');
+        if ($dateFilter) {
+            $departmentCountsQuery->whereBetween('created_at', $dateFilter);
+        }
+        if ($department && $department !== 'all') {
+            $departmentCountsQuery->where('department', $department);
+        }
+        $departmentCounts = $departmentCountsQuery
             ->groupBy('department')
             ->orderByDesc('c')
             ->limit(5)
             ->pluck('c', 'department')
             ->toArray();
-        $recentDocs = \App\Models\Document::orderByDesc('updated_at')->limit(5)->get();
+
+        $recentDocsQuery = \App\Models\Document::orderByDesc('updated_at');
+        if ($dateFilter) {
+            $recentDocsQuery->whereBetween('created_at', $dateFilter);
+        }
+        if ($department && $department !== 'all') {
+            $recentDocsQuery->where('department', $department);
+        }
+        $recentDocs = $recentDocsQuery->limit(5)->get();
         $recent = $recentDocs->map(function ($d) use ($labelMap) {
             $label = $labelMap[$d->status] ?? ucfirst(str_replace('_', ' ', (string)$d->status));
             return [
@@ -395,62 +476,7 @@ Route::middleware('web')->group(function () {
     Route::get('/inspect/{document}', [DocumentController::class, 'inspect'])->name('inspect'); // Controller already returns user.inspect
 
         // Profile: update personal info (saved to user_profiles)
-        Route::post('/profile', function (Request $request) {
-            $validated = $request->validate([
-                'nickname' => ['nullable','string','max:255'],
-                'identity' => ['nullable','in:Teacher,Student'],
-                'full_name' => ['nullable','string','max:255'],
-                'email' => ['nullable','email'],
-                'age' => ['nullable','integer','min:1','max:120'],
-                'occupation' => ['nullable','string','max:255'],
-                'nationality' => ['nullable','string','max:255'],
-                'contact_number' => ['nullable','string','max:255'],
-                'address' => ['nullable','string','max:500'],
-                'gender' => ['nullable','in:Male,Female'],
-            ]);
-
-            $user = User::where('email', Session::get('user_email'))->first();
-            // If no DB user exists (because login is session-based), create one on-the-fly
-            if (!$user) {
-                $user = User::create([
-                    'name' => Session::get('user_name', 'User'),
-                    'email' => Session::get('user_email'),
-                    'password' => bcrypt(Str::random(24)),
-                    'role' => Session::get('user_role', 'user'),
-                ]);
-            }
-            if ($user) {
-                // Persist name/email on users table
-                $user->fill([
-                    'name' => $validated['full_name'] ?? $user->name,
-                    'email' => $validated['email'] ?? $user->email,
-                ])->save();
-                Session::put('user_email', $user->email);
-                Session::put('user_name', $user->name);
-
-                // Persist personal info on user_profiles
-                $profile = UserProfile::firstOrCreate(['user_id' => $user->id]);
-                $profile->fill([
-                    'nickname' => $validated['nickname'] ?? $profile->nickname,
-                    'identity' => $validated['identity'] ?? $profile->identity,
-                    'age' => $validated['age'] ?? $profile->age,
-                    'occupation' => $validated['occupation'] ?? $profile->occupation,
-                    'nationality' => $validated['nationality'] ?? $profile->nationality,
-                    'contact_number' => $validated['contact_number'] ?? $profile->contact_number,
-                    'address' => $validated['address'] ?? $profile->address,
-                    'gender' => $validated['gender'] ?? $profile->gender,
-                ])->save();
-
-                ActivityLog::create([
-                    'user_id' => $user->id,
-                    'action' => 'profile.update',
-                    'details' => ['nickname' => $profile->nickname, 'identity' => $profile->identity],
-                    'ip' => $request->ip(),
-                    'user_agent' => $request->userAgent(),
-                ]);
-            }
-            return back()->with('success', 'Profile updated');
-        })->name('profile.update');
+        Route::post('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
 
         // Profile: upload photo -> save to user_profiles.profile_photo_path
         Route::post('/profile/photo', function (Request $request) {

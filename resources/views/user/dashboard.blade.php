@@ -70,10 +70,11 @@
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ID</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Title</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Handler</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Department</th>
+                                <!-- Handler column removed -->
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">SENT TO</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                                 <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Expected Completion</th>
+                                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">DATE COMPLETED</th>
                                 <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -83,7 +84,7 @@
                                     <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ $doc->code }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-900">{{ $doc->title }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-600">{{ $doc->type }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-600">{{ $doc->handler }}</td>
+                                    <!-- Handler column removed -->
                                     <td class="px-4 py-3 text-sm text-gray-600">{{ $doc->department }}</td>
                                     <td class="px-4 py-3">
                                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold
@@ -130,7 +131,21 @@
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 text-sm text-gray-600">
-                                        {{ $doc->expected_completion_at ? \Carbon\Carbon::parse($doc->expected_completion_at)->format('M d, Y') : '—' }}
+                                        @php
+                                            $status = strtolower($doc->status);
+                                        @endphp
+                                        @if(in_array($status, ['pending', 'reviewing']))
+                                            {{ $doc->expected_completion_at ? \Carbon\Carbon::parse($doc->expected_completion_at)->format('M d, Y') : '—' }}
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td class="px-4 py-3 text-sm text-gray-600">
+                                        @if(in_array($status, ['approved', 'rejected']))
+                                            {{ $doc->updated_at ? \Carbon\Carbon::parse($doc->updated_at)->format('M d, Y') : '—' }}
+                                        @else
+                                            —
+                                        @endif
                                     </td>
                                         <td class="px-4 py-3 text-right flex gap-2 justify-end">
                                         <a href="{{ asset('storage/' . $doc->file_path) }}" download title="Download" class="inline-flex items-center justify-center h-8 w-8 rounded-full text-emerald-600 hover:bg-emerald-50 transition-colors duration-200">

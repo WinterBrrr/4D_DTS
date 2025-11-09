@@ -37,8 +37,8 @@
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">ID</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Title</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Type</th>
-                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Handler</th>
-                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Department</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Owner</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Sent To</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Status</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Uploader</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Date Uploaded</th>

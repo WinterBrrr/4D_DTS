@@ -94,10 +94,13 @@
                             name="date_range"
                             class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         >
-                            <option value="7">Last 7 days</option>
-                            <option value="30" selected>Last 30 days</option>
-                            <option value="90">Last 90 days</option>
-                            <option value="365">Last year</option>
+                                <option value="today">Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="3">Last 3 days</option>
+                                <option value="7">Last 7 days</option>
+                                <option value="30">Last 30 days</option>
+                                <option value="365">Last Year</option>
+                                <option value="all">All Time</option>
                             <option value="custom">Custom range</option>
                         </select>
                     </div>
@@ -109,11 +112,14 @@
                             class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         >
                             <option value="">All Departments</option>
-                            <option value="hr">Human Resources</option>
-                            <option value="finance">Finance</option>
-                            <option value="it">Information Technology</option>
-                            <option value="legal">Legal</option>
-                            <option value="operations">Operations</option>
+                            <option value="CIT" {{ request('department_filter') == 'CIT' ? 'selected' : '' }}>CIT</option>
+                            <option value="ICJE" {{ request('department_filter') == 'ICJE' ? 'selected' : '' }}>ICJE</option>
+                            <option value="CE" {{ request('department_filter') == 'CE' ? 'selected' : '' }}>CE</option>
+                            <option value="COE" {{ request('department_filter') == 'COE' ? 'selected' : '' }}>COE</option>
+                            <option value="COM" {{ request('department_filter') == 'COM' ? 'selected' : '' }}>COM</option>
+                            <option value="COT" {{ request('department_filter') == 'COT' ? 'selected' : '' }}>COT</option>
+                            <option value="CAS" {{ request('department_filter') == 'CAS' ? 'selected' : '' }}>CAS</option>
+                            <option value="ADMIN" {{ request('department_filter') == 'ADMIN' ? 'selected' : '' }}>ADMIN</option>
                         </select>
                     </div>
                     <button class="inline-flex items-center px-4 py-1.5 bg-emerald-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors ml-auto">

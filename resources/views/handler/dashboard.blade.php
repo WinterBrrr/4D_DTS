@@ -4,6 +4,11 @@
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
         @include('partials.handler-sidebar')
         <div class="flex-1">
+            @if(session('success'))
+                <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+                    {{ session('success') }}
+                </div>
+            @endif
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <h1 class="text-2xl font-bold text-emerald-700">Welcome to Handler Dashboard!</h1>
@@ -48,8 +53,7 @@
                                 <th class="px-3 py-2 text-left">ID</th>
                                 <th class="px-3 py-2 text-left">Title</th>
                                 <th class="px-3 py-2 text-left">Type</th>
-                                <th class="px-3 py-2 text-left">Handler</th>
-                                <th class="px-3 py-2 text-left">Department</th>
+                                <th class="px-3 py-2 text-left">Owner</th>
                                 <th class="px-3 py-2 text-left">Status</th>
                                 <th class="px-3 py-2 text-left">Expected Completion</th>
                             </tr>
@@ -61,7 +65,6 @@
                                     <td class="px-3 py-2">{{ $doc->title }}</td>
                                     <td class="px-3 py-2">{{ $doc->type }}</td>
                                     <td class="px-3 py-2">{{ $doc->handler ?? '—' }}</td>
-                                    <td class="px-3 py-2">{{ $doc->department }}</td>
                                     <td class="px-3 py-2">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
                                             {{ isset($doc->status) && str_contains(strtolower($doc->status), 'complete') 
@@ -71,32 +74,6 @@
                                         </span>
                                     </td>
                                     <td class="px-3 py-2">{{ $doc->expected_completion_at ?? '—' }}</td>
-                                </tr>
-                                <tr>
-                                    <td colspan="7" class="px-3 pb-6">
-                                        <div class="grid grid-cols-2 gap-4">
-                                            <div>
-                                                @include('partials.handler-review-form', ['doc' => $doc])
-                                                @include('partials.handler-forward-form', ['doc' => $doc])
-                                                @include('partials.handler-timeline-form', ['doc' => $doc])
-                                            </div>
-                                            <div>
-                                                @include('partials.handler-comment-form', ['doc' => $doc])
-                                                <div class="mt-2">
-                                                    <h4 class="text-xs font-semibold text-gray-600 mb-2">Comments/Feedback</h4>
-                                                    @foreach($doc->comments ?? [] as $comment)
-                                                        <div class="mb-2 p-2 bg-gray-50 rounded">
-                                                            <strong>{{ $comment->user->name ?? 'Handler' }}:</strong> {{ $comment->comment }}
-                                                            <span class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($comment->created_at)->diffForHumans() }}</span>
-                                                        </div>
-                                                    @endforeach
-                                                    @if(empty($doc->comments) || count($doc->comments) === 0)
-                                                        <div class="text-xs text-gray-400">No comments yet.</div>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
                                 </tr>
                             @empty
                                 <tr>

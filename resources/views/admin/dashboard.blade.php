@@ -55,10 +55,11 @@
                                 <th class="px-3 py-2 text-left">ID</th>
                                 <th class="px-3 py-2 text-left">Title</th>
                                 <th class="px-3 py-2 text-left">Type</th>
-                                <th class="px-3 py-2 text-left">Handler</th>
-                                <th class="px-3 py-2 text-left">Department</th>
+                                <th class="px-3 py-2 text-left">Owner</th>
+                                <th class="px-3 py-2 text-left">Sent To</th>
                                 <th class="px-3 py-2 text-left">Status</th>
-                                <th class="px-3 py-2 text-left">Expected Completion</th>
+                                <th class="px-3 py-2 text-left">Expected</th>
+                                <th class="px-3 py-2 text-left">Completed</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
@@ -93,7 +94,28 @@
                                             {{ $statusSymbol }} {{ ucfirst($doc->status) }}
                                         </span>
                                     </td>
-                                    <td class="px-3 py-2">{{ $doc->expected_completion_at ?? '—' }}</td>
+                                    @php
+                                        $status = strtolower($doc->status);
+                                        $expected = '-';
+                                        $completed = '-';
+                                        if (in_array($status, ['pending', 'reviewing'])) {
+                                            if ($doc->expected_completion_at) {
+                                                $expected = \Carbon\Carbon::parse($doc->expected_completion_at)->format('M d, Y');
+                                            } else {
+                                                $expected = 'TBD';
+                                            }
+                                            $completed = '-';
+                                        } elseif (in_array($status, ['approved', 'rejected'])) {
+                                            $expected = '-';
+                                            if ($doc->updated_at) {
+                                                $completed = \Carbon\Carbon::parse($doc->updated_at)->format('M d, Y');
+                                            } else {
+                                                $completed = 'TBD';
+                                            }
+                                        }
+                                    @endphp
+                                    <td class="px-3 py-2">{{ $expected }}</td>
+                                    <td class="px-3 py-2">{{ $completed }}</td>
                                 </tr>
                             @empty
                                 <tr>

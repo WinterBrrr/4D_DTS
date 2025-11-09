@@ -2,16 +2,28 @@
 <div class="w-64 bg-white rounded-2xl shadow-sm ring-1 ring-black/5 h-fit sticky top-6">
     <div class="p-6">
         {{-- Auditor Profile Section --}}
+
         <div class="flex items-center mb-6">
             <div class="flex-shrink-0">
-                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span class="text-sm font-medium text-blue-600">
-                        {{ substr(Session::get('user_name', 'Auditor'), 0, 2) }}
-                    </span>
-                </div>
+                @php
+                    $userEmail = Session::get('user_email');
+                    $userName = Session::get('user_name', 'Auditor');
+                    $pUser = \App\Models\User::where('email', $userEmail)->first();
+                    $profile = $pUser ? \App\Models\UserProfile::where('user_id', $pUser->id)->first() : null;
+                    $photo = session('profile_photo_path') ?: ($profile?->profile_photo_path);
+                @endphp
+                @if($photo)
+                    <img src="{{ asset('storage/' . $photo) }}" alt="Profile Image" class="w-10 h-10 rounded-full object-cover border-2 border-blue-200">
+                @else
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium text-blue-600">
+                            {{ substr($userName, 0, 2) }}
+                        </span>
+                    </div>
+                @endif
             </div>
             <div class="ml-3">
-                <p class="text-sm font-medium text-gray-900">{{ Session::get('user_name', 'Auditor User') }}</p>
+                <p class="text-sm font-medium text-gray-900">{{ $userName }}</p>
                 <p class="text-xs text-gray-500">Auditor</p>
             </div>
         </div>

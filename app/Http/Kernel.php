@@ -57,8 +57,9 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         
-        // Custom middleware - CORRECTED
-        'check.auth' => \App\Http\Middleware\CheckAuth::class,
-        'admin' => \App\Http\Middleware\AdminMiddleware::class,
+    // Custom middleware - CORRECTED
+    'check.auth' => \App\Http\Middleware\CheckAuth::class,
+    'admin' => \App\Http\Middleware\AdminMiddleware::class,
+    'require.handler.department' => \App\Http\Middleware\RequireHandlerDepartment::class,
     ];
 }

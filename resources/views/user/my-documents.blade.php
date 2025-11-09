@@ -39,7 +39,7 @@
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">ID</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Title</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Type</th>
-                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Department</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Sent To</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Status</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Date</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-emerald-700">Actions</th>
@@ -65,7 +65,28 @@
                                             ][$status] ?? 'bg-gray-100 text-gray-700';
                                         @endphp
                                         <span class="inline-flex items-center px-3 py-1 rounded-full font-semibold {{ $badgeClass }}">
-                                            {{ ucfirst($doc->status) }}
+                                            @switch($status)
+                                                @case('pending')
+                                                    🕒 Pending
+                                                    @break
+                                                @case('reviewing')
+                                                    🔎 Reviewing
+                                                    @break
+                                                @case('approved')
+                                                    👍 Approved
+                                                    @break
+                                                @case('rejected')
+                                                    ❌ Rejected
+                                                    @break
+                                                @case('final_processing')
+                                                    📄 Final
+                                                    @break
+                                                @case('completed')
+                                                    ✅ Completed
+                                                    @break
+                                                @default
+                                                    {{ ucfirst($doc->status) }}
+                                            @endswitch
                                         </span>
                                     </td>
                                     <td class="px-3 py-2 text-sm text-gray-600">{{ $tab === 'sent' ? $doc->created_at->format('Y-m-d') : $doc->updated_at->format('Y-m-d') }}</td>
