@@ -26,8 +26,8 @@
             <div class="rounded-3xl bg-gradient-to-r from-emerald-500 to-teal-600 p-6 text-white shadow-sm">
                 <div class="flex flex-row gap-8 items-center justify-between">
                     <div class="text-center flex-1">
-                        <div class="text-white/85 font-bold">Assigned Documents</div>
-                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['assigned'] ?? 0 }}</div>
+                        <div class="text-white/85 font-bold">Total Documents</div>
+                        <div class="text-6xl font-extrabold drop-shadow-sm">{{ $stats['total'] ?? 0 }}</div>
                     </div>
                     <div class="text-center flex-1">
                         <div class="text-white/85 font-bold">Pending</div>
@@ -42,10 +42,11 @@
                         <div class="text-6xl font-extrabold drop-shadow-sm">{{ ($stats['approved'] ?? 0) + ($stats['rejected'] ?? 0) }}</div>
                     </div>
                 </div>
+                <div class="mt-4 text-xs text-white/85 text-right">Last Accessed: {{ $recentActivity[0]['title'] ?? '—' }}</div>
             </div>
             <!-- Document List -->
             <div class="mt-6">
-                <h2 class="text-sm font-medium text-gray-600">Assigned Documents</h2>
+                <h2 class="text-sm font-medium text-gray-600">Document List</h2>
                 <div class="mt-2 overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm">
                     <table class="w-full text-sm">
                         <thead class="bg-emerald-50 text-emerald-700">
@@ -53,36 +54,103 @@
                                 <th class="px-3 py-2 text-left">ID</th>
                                 <th class="px-3 py-2 text-left">Title</th>
                                 <th class="px-3 py-2 text-left">Type</th>
-                                <th class="px-3 py-2 text-left">Owner</th>
+                                <th class="px-3 py-2 text-left">Handler</th>
+                                <th class="px-3 py-2 text-left">Department</th>
                                 <th class="px-3 py-2 text-left">Status</th>
-                                <th class="px-3 py-2 text-left">Expected Completion</th>
+                                <th class="px-3 py-2 text-left">Expected</th>
+                                <th class="px-3 py-2 text-left">Completed</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
-                            @forelse($documents as $doc)
-                                <tr class="hover:bg-gray-50">
+                            @forelse($docs as $doc)
+                                <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='/handler/documents/{{ $doc->id }}'">
                                     <td class="px-3 py-2">{{ $doc->id }}</td>
                                     <td class="px-3 py-2">{{ $doc->title }}</td>
                                     <td class="px-3 py-2">{{ $doc->type }}</td>
                                     <td class="px-3 py-2">{{ $doc->handler ?? '—' }}</td>
+                                    <td class="px-3 py-2">{{ $doc->department }}</td>
                                     <td class="px-3 py-2">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
-                                            {{ isset($doc->status) && str_contains(strtolower($doc->status), 'complete') 
-                                                ? 'bg-emerald-100 text-emerald-700' 
-                                                : 'bg-amber-100 text-amber-700' }}">
-                                            {{ $doc->status }}
+                                        @php
+                                            $status = strtolower($doc->status);
+                                            $badgeClass = [
+                                                'pending' => 'bg-amber-100 text-amber-700',
+                                                'reviewing' => 'bg-blue-100 text-blue-700',
+                                                'approved' => 'bg-green-100 text-green-700',
+                                                'rejected' => 'bg-red-100 text-red-700',
+                                                'final_processing' => 'bg-purple-100 text-purple-700',
+                                                'completed' => 'bg-emerald-100 text-emerald-700',
+                                            ][$status] ?? 'bg-gray-100 text-gray-700';
+                                            $statusSymbol = [
+                                                'pending' => '🕒',
+                                                'reviewing' => '🔎',
+                                                'approved' => '👍',
+                                                'rejected' => '❌',
+                                                'final_processing' => '📄',
+                                                'completed' => '✅',
+                                            ][$status] ?? '';
+                                        @endphp
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full font-semibold {{ $badgeClass }}">
+                                            {{ $statusSymbol }} {{ ucfirst($doc->status) }}
                                         </span>
                                     </td>
-                                    <td class="px-3 py-2">{{ $doc->expected_completion_at ?? '—' }}</td>
+                                    @php
+                                        $status = strtolower($doc->status);
+                                        $expected = '-';
+                                        $completed = '-';
+                                        if (in_array($status, ['pending', 'reviewing'])) {
+                                            if ($doc->expected_completion_at) {
+                                                $expected = \Carbon\Carbon::parse($doc->expected_completion_at)->format('M d, Y');
+                                            } else {
+                                                $expected = 'TBD';
+                                            }
+                                            $completed = '-';
+                                        } elseif (in_array($status, ['approved', 'rejected'])) {
+                                            $expected = '-';
+                                            if ($doc->updated_at) {
+                                                $completed = \Carbon\Carbon::parse($doc->updated_at)->format('M d, Y');
+                                            } else {
+                                                $completed = 'TBD';
+                                            }
+                                        }
+                                    @endphp
+                                    <td class="px-3 py-2">{{ $expected }}</td>
+                                    <td class="px-3 py-2">{{ $completed }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-3 py-6 text-center text-gray-500">No documents found.</td>
+                                    <td colspan="8" class="px-3 py-6 text-center text-gray-500">No documents found.</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
+                    <div class="p-4">
+                        {{ $docs->links() }}
+                    </div>
                 </div>
+            </div>
+            <!-- Recent Activity -->
+            <div class="mt-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
+                @if(isset($recentActivity) && count($recentActivity) > 0)
+                    <div class="space-y-3">
+                        @foreach($recentActivity as $activity)
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm text-gray-900 truncate">{{ $activity['title'] }}</p>
+                                    <p class="text-xs text-gray-500">{{ $activity['uploaded_at'] }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-8">
+                        <svg class="mx-auto w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p class="text-sm text-gray-500 mt-2">No recent activity</p>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

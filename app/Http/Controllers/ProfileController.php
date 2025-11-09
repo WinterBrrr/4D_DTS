@@ -69,6 +69,13 @@ class ProfileController extends Controller
             'gender' => $validated['gender'] ?? $profile->gender,
         ])->save();
 
+        // Log department value for debugging
+        \Log::info('Profile update department', [
+            'user_id' => $user->id,
+            'validated_department' => $validated['department'] ?? null,
+            'profile_department' => $profile->department,
+        ]);
+
         return back()->with('success', 'Profile updated');
     }
 }

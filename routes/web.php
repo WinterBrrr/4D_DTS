@@ -234,27 +234,29 @@ Route::middleware('web')->group(function () {
 
     // Protected user routes
     Route::middleware([\App\Http\Middleware\CheckAuth::class])->group(function () {
+    // Handler: Show document details
+    Route::get('/handler/documents/{document}', [\App\Http\Controllers\HandlerController::class, 'show'])->name('handler.documents.show');
 
-        // Handler routes that require department to be set
-        Route::middleware('require.handler.department')->group(function () {
-            // Handler exclusive: Upload Document page
-            Route::get('/handler/upload', function () {
-                return view('handler.upload');
-            })->name('handler.upload');
+        // Handler exclusive: Upload Document page
+        Route::get('/handler/upload', function () {
+            return view('handler.upload');
+        })->name('handler.upload');
 
-            // Handler exclusive: Status Guide page
-            Route::get('/handler/status-guide', function () {
-                return view('handler.status_guide');
-            })->name('handler.status.guide');
+        // Handler exclusive: Status Guide page
+        Route::get('/handler/status-guide', function () {
+            return view('handler.status_guide');
+        })->name('handler.status.guide');
 
-            // Handler workflow routes (controller-based)
-            Route::get('/handler/dashboard', [\App\Http\Controllers\HandlerController::class, 'dashboard'])->name('handler.dashboard');
-            Route::get('/handler/pending', [\App\Http\Controllers\HandlerController::class, 'pending'])->name('handler.pending');
-            Route::get('/handler/initial', [\App\Http\Controllers\HandlerController::class, 'initial'])->name('handler.initial');
-            Route::get('/handler/under', [\App\Http\Controllers\HandlerController::class, 'under'])->name('handler.under');
-            Route::get('/handler/final', [\App\Http\Controllers\HandlerController::class, 'final'])->name('handler.final');
-            Route::get('/handler/completed', [\App\Http\Controllers\HandlerController::class, 'completed'])->name('handler.completed');
-        });
+        // Handler workflow routes (controller-based)
+        Route::get('/handler/dashboard', [\App\Http\Controllers\HandlerController::class, 'dashboard'])->name('handler.dashboard');
+        Route::get('/handler/pending', [\App\Http\Controllers\HandlerController::class, 'pending'])->name('handler.pending');
+        Route::get('/handler/initial', [\App\Http\Controllers\HandlerController::class, 'initial'])->name('handler.initial');
+        Route::get('/handler/under', [\App\Http\Controllers\HandlerController::class, 'under'])->name('handler.under');
+        Route::get('/handler/final', [\App\Http\Controllers\HandlerController::class, 'final'])->name('handler.final');
+        Route::get('/handler/completed', [\App\Http\Controllers\HandlerController::class, 'completed'])->name('handler.completed');
+
+        // Handler profile update route (allow saving department)
+        Route::post('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
 
     // Auditor reports page (admin-level analytics, no document handling)
     Route::get('/auditor/reports', function () {
@@ -432,18 +434,6 @@ Route::middleware('web')->group(function () {
         return view('auditor.profile');
     })->name('auditor.profile.show');
     // Handler document actions
-    // Handler dashboard route
-    Route::get('/handler/dashboard', function (Request $request) {
-        // Example stats and recent activity for handler dashboard
-        $user = Auth::user();
-        $stats = [
-            'assigned' => \App\Models\Document::where('handler', $user->name)->count(),
-            'pending' => \App\Models\Document::where('handler', $user->name)->where('status', 'pending')->count(),
-            'completed' => \App\Models\Document::where('handler', $user->name)->where('status', 'completed')->count(),
-        ];
-        $documents = \App\Models\Document::where('handler', $user->name)->orderByDesc('updated_at')->get();
-        return view('handler.dashboard', compact('stats', 'documents'));
-    })->name('handler.dashboard');
     // Auditor dashboard route
     Route::get('/auditor/dashboard', function (Request $request) {
         // Example stats and recent activity for auditor dashboard

@@ -18,20 +18,7 @@ class RequireHandlerDepartment
      */
     public function handle(Request $request, Closure $next)
     {
-        $user = Auth::user();
-        if ($user && $user->role === 'handler') {
-            $profile = UserProfile::where('user_id', $user->id)->first();
-            if (!$profile || empty($profile->department)) {
-                // Allow only profile and logout routes
-                $allowedRoutes = [
-                    'handler.profile',
-                    'logout',
-                ];
-                if (!in_array($request->route()->getName(), $allowedRoutes)) {
-                    return redirect()->route('handler.profile')->with('require_department', true)->with('error', 'Please add your department to continue.');
-                }
-            }
-        }
+        // Reverted: allow all handler routes regardless of department
         return $next($request);
     }
 }
