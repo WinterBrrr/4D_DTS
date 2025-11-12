@@ -76,7 +76,15 @@
                                             {{ $statusSymbol }} {{ ucfirst($doc['status']) }}
                                         </span>
                                     </td>
-                                    <td class="px-3 py-2 text-sm text-gray-600">{{ $doc['uploaded_at'] }}</td>
+                                    <td class="px-3 py-2 text-sm text-gray-600">
+                                        @php
+                                            $completedDate = '-';
+                                            if (isset($doc['updated_at']) && $doc['updated_at']) {
+                                                $completedDate = \Carbon\Carbon::parse($doc['updated_at'])->format('Y-m-d');
+                                            }
+                                        @endphp
+                                        {{ $completedDate }}
+                                    </td>
                                     <td class="px-3 py-2">
                                         <a href="{{ route('handler.documents.show', $doc['id']) }}" class="text-emerald-600 hover:underline text-xs">View</a>
                                     </td>

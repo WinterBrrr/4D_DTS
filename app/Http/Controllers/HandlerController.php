@@ -138,7 +138,8 @@ class HandlerController extends Controller
 		$completedDocumentsRaw = \App\Models\Document::whereIn('status', ['completed', 'approved', 'rejected'])
 			->whereRaw('LOWER(TRIM(department)) = ?', [$department])
 			->orderByDesc('id')->get();
-		$completedDocuments = $completedDocumentsRaw->map(function($doc) {
+
+		$completedDocuments = $completedDocumentsRaw->map(function ($doc) {
 			return [
 				'id' => $doc->id,
 				'title' => $doc->title,
@@ -149,6 +150,8 @@ class HandlerController extends Controller
 				'expected_completion_at' => $doc->expected_completion_at ?? '—',
 				'uploader' => $doc->user ? $doc->user->name : 'Unknown',
 				'uploaded_at' => $doc->created_at ? $doc->created_at->format('Y-m-d') : '',
+				// Format updated_at as yyyy-mm-dd for display, fallback to null if missing
+				'updated_at' => $doc->updated_at ? $doc->updated_at->format('Y-m-d') : null,
 			];
 		});
 		return view('handler.completed', compact('completedDocuments', 'completedDocumentsRaw'));
