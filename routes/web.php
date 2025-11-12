@@ -252,7 +252,7 @@ Route::middleware('web')->group(function () {
         Route::get('/handler/pending', [\App\Http\Controllers\HandlerController::class, 'pending'])->name('handler.pending');
         Route::get('/handler/initial', [\App\Http\Controllers\HandlerController::class, 'initial'])->name('handler.initial');
         Route::get('/handler/under', [\App\Http\Controllers\HandlerController::class, 'under'])->name('handler.under');
-        Route::get('/handler/final', [\App\Http\Controllers\HandlerController::class, 'final'])->name('handler.final');
+        Route::get('/handler/final/{document}', [\App\Http\Controllers\HandlerController::class, 'final'])->name('handler.final');
         Route::get('/handler/completed', [\App\Http\Controllers\HandlerController::class, 'completed'])->name('handler.completed');
 
         // Handler profile update route (allow saving department)
@@ -1157,3 +1157,12 @@ Route::middleware(['web'])->group(function () {
         // This is a catch-all, but won't execute due to route order
     });
 });
+
+// Handler initial document submission
+Route::post('/handler/initial/{document}/submit', [\App\Http\Controllers\HandlerController::class, 'submitInitial'])->name('handler.initial.submit');
+
+// Handler: Update document status
+Route::post('/handler/update-status/{document}', [\App\Http\Controllers\HandlerController::class, 'updateStatus'])->name('handler.updateStatus');
+
+// Handler: Final document submission
+Route::post('/handler/final/{document}/submit', [\App\Http\Controllers\HandlerController::class, 'submitFinal'])->name('handler.final.submit');

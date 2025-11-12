@@ -15,7 +15,11 @@
             <!-- Document Overview Form -->
             <div class="rounded-3xl bg-white ring-1 ring-emerald-100 shadow-sm p-6">
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Document Overview</h2>
-                <form class="grid grid-cols-1 md:grid-cols-2 gap-4" method="POST" action="{{ isset($currentDocument) ? route('handler.final.submit', is_array($currentDocument) ? $currentDocument['id'] : $currentDocument->id) : '#' }}">
+                @php
+                    $currentDocument = $currentDocument ?? $documentsRaw->first();
+                    $submitRoute = $currentDocument ? route('handler.final.submit', $currentDocument->id) : '#';
+                @endphp
+                <form class="grid grid-cols-1 md:grid-cols-2 gap-4" method="POST" action="{{ $submitRoute }}">
                     @csrf
                     @if(session('success'))
                         <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">

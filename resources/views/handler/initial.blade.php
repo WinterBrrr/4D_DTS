@@ -1,3 +1,13 @@
+{{-- Ensure $currentDocument is defined to avoid errors --}}
+@php
+    $currentDocument = $currentDocument ?? $documentsRaw->first();
+@endphp
+
+{{-- Add a fallback for route generation --}}
+@php
+    $submitRoute = $currentDocument ? route('handler.initial.submit', $currentDocument->id) : '#';
+@endphp
+
 {{-- Handler Initial Review --}}
 @push('head')
 <style>
@@ -12,16 +22,17 @@
             <div class="flex items-center justify-between mb-6">
                 <h1 class="text-2xl font-bold text-emerald-700">Processing of the Document</h1>
             </div>
+
             <!-- Document Overview Form -->
             <div class="rounded-3xl bg-white ring-1 ring-emerald-100 shadow-sm p-6">
                 <h2 class="text-lg font-medium text-gray-900 mb-4">Document Overview</h2>
                 <form class="grid grid-cols-1 md:grid-cols-2 gap-4" method="POST" action="{{ route('handler.initial.submit', $currentDocument?->id) }}">
                     @csrf
-                    @if(session('success'))
-                        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
-                            {{ session('success') }}
-                        </div>
-                    @endif
+            @if(session('success'))
+                <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
+                    {{ session('success') }}
+                </div>
+            @endif
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">Document Type</label>
                         <input class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="{{ $currentDocument?->type ?? '' }}" readonly disabled />
@@ -51,6 +62,7 @@
                             <input type="date" name="expected_completion_at" class="w-40 rounded-lg border border-gray-200 px-3 py-2 text-sm bg-gray-50" value="{{ $currentDocument?->expected_completion_at ?? '' }}" required />
                         </div>
                     </div>
+
                     <div class="md:col-span-2 mt-4">
                         <label class="block text-xs font-medium text-gray-600 mb-1">Comments <span class="text-red-500">*</span></label>
                         <textarea name="comments" rows="3" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" required placeholder="Enter your comments here..."></textarea>
