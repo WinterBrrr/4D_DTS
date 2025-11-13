@@ -1,8 +1,8 @@
-{{-- Admin Reports Template --}}
-<x-layouts.app :title="'Admin Reports'" compact-sidebar>
+{{-- Auditor Reports Template --}}
+<x-layouts.app :title="'Auditor Reports'" compact-sidebar>
     <div class="mx-auto w-full max-w-[1400px] px-4 py-6 flex gap-6">
         @include('partials.admin-sidebar')
-        
+
         <div class="flex-1">
             <div class="mb-6">
                 <h1 class="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
@@ -86,6 +86,7 @@
 
             {{-- Report Filters --}}
             <div class="bg-white rounded-xl p-4 shadow-sm ring-1 ring-black/5 mb-6">
+                {{-- Ensure admin sidebar is maintained when generating reports --}}
                 <form method="GET" action="{{ route('admin.reports') }}" class="flex flex-wrap items-center gap-4">
                     <div class="flex items-center gap-2">
                         <label for="date_range" class="text-sm font-medium text-gray-700">Date Range:</label>
@@ -123,113 +124,162 @@
                         </select>
                     </div>
                     <div class="ml-auto flex items-center gap-3">
-                        <a href="{{ route('admin.reports') }}" class="text-sm text-gray-600 hover:underline">Reset</a>
+                        <a href="{{ route('auditor.reports') }}" class="text-sm text-gray-600 hover:underline">Reset</a>
                         <button type="submit" class="inline-flex items-center px-4 py-1.5 bg-emerald-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
                             Generate Report
+                        </button>
+                        <button type="button" id="download-report" class="inline-flex items-center px-4 py-1.5 bg-blue-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            Download Report
                         </button>
                     </div>
                 </form>
             </div>
 
             {{-- Report Sections --}}
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                {{-- Document Status Chart --}}
-                <div class="bg-white rounded-xl p-6 shadow-sm ring-1 ring-black/5">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Document Status Distribution</h3>
-                    @if(!empty($statusCounts))
-                        <div class="space-y-3">
-                            @foreach($statusCounts as $label => $count)
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        @php
-                                            $color = $colors[$label] ?? '#e5e7eb';
-                                            $border = '';
-                                            if ($label === 'Approved') {
-                                                $color = '#22c55e'; // green
-                                                $border = 'border border-green-500';
-                                            } elseif ($label === 'Rejected') {
-                                                $color = '#ef4444'; // red
-                                                $border = 'border border-red-500';
-                                            } elseif ($label === 'Pending') {
-                                                $color = '#eab308'; // yellow
-                                                $border = 'border border-yellow-500';
-                                            } elseif ($label === 'Under Review') {
-                                                $color = '#3b82f6'; // blue
-                                                $border = 'border border-blue-500';
-                                            } elseif ($label === 'Final Processing') {
-                                                $color = '#a855f7'; // purple
-                                                $border = 'border border-purple-500';
-                                            } elseif ($label === 'Completed') {
-                                                $color = '#22c55e'; // green
-                                                $border = 'border border-green-500';
-                                            }
-                                        @endphp
-                                        <div class="w-4 h-4 rounded mr-3 {{ $border }}" style="background-color: {{ $color }}"></div>
-                                        <span class="text-sm text-gray-700">{{ $label }}</span>
+            <div id="report-content">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    {{-- Document Status Chart --}}
+                    <div class="bg-white rounded-xl p-6 shadow-sm ring-1 ring-black/5">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Document Status Distribution</h3>
+                        @if(!empty($filteredStatusCounts))
+                            <div class="space-y-3">
+                                @foreach($filteredStatusCounts as $label => $count)
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            @php
+                                                $color = $colors[$label] ?? '#e5e7eb';
+                                                $border = '';
+                                                if ($label === 'Approved') {
+                                                    $color = '#22c55e'; // green
+                                                    $border = 'border border-green-500';
+                                                } elseif ($label === 'Rejected') {
+                                                    $color = '#ef4444'; // red
+                                                    $border = 'border border-red-500';
+                                                } elseif ($label === 'Pending') {
+                                                    $color = '#eab308'; // yellow
+                                                    $border = 'border border-yellow-500';
+                                                } elseif ($label === 'Under Review') {
+                                                    $color = '#3b82f6'; // blue
+                                                    $border = 'border border-blue-500';
+                                                } elseif ($label === 'Final Processing') {
+                                                    $color = '#a855f7'; // purple
+                                                    $border = 'border border-purple-500';
+                                                } elseif ($label === 'Completed') {
+                                                    $color = '#22c55e'; // green
+                                                    $border = 'border border-green-500';
+                                                }
+                                            @endphp
+                                            <div class="w-4 h-4 rounded mr-3 {{ $border }}" style="background-color: {{ $color }}"></div>
+                                            <span class="text-sm text-gray-700">{{ $label }}</span>
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-900">{{ $count }}</span>
                                     </div>
-                                    <span class="text-sm font-medium text-gray-900">{{ $count }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="text-sm text-gray-500">No data to display.</div>
-                    @endif
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-sm text-gray-500">No data to display.</div>
+                        @endif
+                    </div>
+
+                    {{-- Department Breakdown --}}
+                    <div class="bg-white rounded-xl p-6 shadow-sm ring-1 ring-black/5">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Documents by Department</h3>
+                        @if(!empty($departmentCounts))
+                            <div class="space-y-3">
+                                @foreach($departmentCounts as $dept => $count)
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-gray-700">{{ $dept }}</span>
+                                        <span class="text-sm font-medium text-gray-900">{{ $count }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-sm text-gray-500">No data to display.</div>
+                        @endif
+                    </div>
                 </div>
 
-                {{-- Department Breakdown --}}
-                <div class="bg-white rounded-xl p-6 shadow-sm ring-1 ring-black/5">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Documents by Department</h3>
-                    @if(!empty($departmentCounts))
-                        <div class="space-y-3">
-                            @foreach($departmentCounts as $dept => $count)
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm text-gray-700">{{ $dept }}</span>
-                                    <span class="text-sm font-medium text-gray-900">{{ $count }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="text-sm text-gray-500">No data to display.</div>
-                    @endif
-                </div>
-            </div>
-
-            {{-- Recent Activity Table --}}
-            <div class="bg-white rounded-xl shadow-sm ring-1 ring-black/5">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h3 class="text-lg font-medium text-gray-900">Recent Processing Activity</h3>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Processed By</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @forelse(($recent ?? []) as $row)
+                {{-- Recent Activity Table --}}
+                <div class="bg-white rounded-xl shadow-sm ring-1 ring-black/5">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">Recent Processing Activity</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
                                 <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $row['title'] ?? '' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $row['department'] ?? '' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{{ $row['status'] ?? '' }}</span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $row['updated'] ?? '' }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $row['user'] ?? '-' }}</td>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Processed By</th>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">No activity found.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @forelse(($recent ?? []) as $row)
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $row['title'] ?? '' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $row['department'] ?? '' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">{{ $row['status'] ?? '' }}</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $row['updated'] ?? '' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $row['user'] ?? '-' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-8 text-center text-sm text-gray-500">No activity found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        document.getElementById('download-report').addEventListener('click', function () {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+
+            // Capture the content of the report using html2canvas
+            const content = document.getElementById('report-content');
+            html2canvas(content, {
+                scale: 2, // Increase resolution
+                useCORS: true, // Enable cross-origin resource sharing
+                allowTaint: true, // Allow tainted images
+                logging: true, // Enable logging for debugging
+                backgroundColor: '#ffffff', // Set background color explicitly
+                removeContainer: true, // Remove temporary container
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 190; // Fit to A4 width
+                const pageHeight = 297; // A4 height
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                // Add the image to the PDF
+                doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                // Save the PDF
+                doc.save('report.pdf');
+            }).catch(error => {
+                console.error('Error generating PDF:', error);
+                alert('Failed to generate the report. Please try again.');
+            });
+        });
+    </script>
 </x-layouts.app>

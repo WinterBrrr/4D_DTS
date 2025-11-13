@@ -277,6 +277,12 @@ Route::middleware('web')->group(function () {
             $dateFilter = [now()->subDays(364)->startOfDay(), now()->endOfDay()];
         } elseif ($dateRange === 'all') {
             $dateFilter = null;
+        } elseif ($dateRange === 'custom') {
+            $customFrom = request('custom_from');
+            $customTo = request('custom_to');
+            if ($customFrom && $customTo) {
+                $dateFilter = [Carbon::parse($customFrom)->startOfDay(), Carbon::parse($customTo)->endOfDay()];
+            }
         }
 
         $departmentFilter = $department !== 'all' ? $department : null;
