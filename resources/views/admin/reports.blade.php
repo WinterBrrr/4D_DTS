@@ -86,7 +86,7 @@
 
             {{-- Report Filters --}}
             <div class="bg-white rounded-xl p-4 shadow-sm ring-1 ring-black/5 mb-6">
-                <div class="flex flex-wrap items-center gap-4">
+                <form method="GET" action="{{ route('admin.reports') }}" class="flex flex-wrap items-center gap-4">
                     <div class="flex items-center gap-2">
                         <label for="date_range" class="text-sm font-medium text-gray-700">Date Range:</label>
                         <select 
@@ -94,14 +94,14 @@
                             name="date_range"
                             class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         >
-                                <option value="today">Today</option>
-                                <option value="yesterday">Yesterday</option>
-                                <option value="3">Last 3 days</option>
-                                <option value="7">Last 7 days</option>
-                                <option value="30">Last 30 days</option>
-                                <option value="365">Last Year</option>
-                                <option value="all">All Time</option>
-                            <option value="custom">Custom range</option>
+                                <option value="">All Time</option>
+                                <option value="today" {{ request('date_range') == 'today' ? 'selected' : '' }}>Today</option>
+                                <option value="yesterday" {{ request('date_range') == 'yesterday' ? 'selected' : '' }}>Yesterday</option>
+                                <option value="3" {{ request('date_range') == '3' ? 'selected' : '' }}>Last 3 days</option>
+                                <option value="7" {{ request('date_range') == '7' ? 'selected' : '' }}>Last 7 days</option>
+                                <option value="30" {{ request('date_range') == '30' ? 'selected' : '' }}>Last 30 days</option>
+                                <option value="365" {{ request('date_range') == '365' ? 'selected' : '' }}>Last Year</option>
+                                <option value="custom" {{ request('date_range') == 'custom' ? 'selected' : '' }}>Custom range</option>
                         </select>
                     </div>
                     <div class="flex items-center gap-2">
@@ -111,7 +111,7 @@
                             name="department_filter"
                             class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         >
-                            <option value="">All Departments</option>
+                            <option value="" {{ request('department_filter') == '' ? 'selected' : '' }}>All Departments</option>
                             <option value="CIT" {{ request('department_filter') == 'CIT' ? 'selected' : '' }}>CIT</option>
                             <option value="ICJE" {{ request('department_filter') == 'ICJE' ? 'selected' : '' }}>ICJE</option>
                             <option value="CE" {{ request('department_filter') == 'CE' ? 'selected' : '' }}>CE</option>
@@ -122,10 +122,13 @@
                             <option value="ADMIN" {{ request('department_filter') == 'ADMIN' ? 'selected' : '' }}>ADMIN</option>
                         </select>
                     </div>
-                    <button class="inline-flex items-center px-4 py-1.5 bg-emerald-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors ml-auto">
-                        Generate Report
-                    </button>
-                </div>
+                    <div class="ml-auto flex items-center gap-3">
+                        <a href="{{ route('admin.reports') }}" class="text-sm text-gray-600 hover:underline">Reset</a>
+                        <button type="submit" class="inline-flex items-center px-4 py-1.5 bg-emerald-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
+                            Generate Report
+                        </button>
+                    </div>
+                </form>
             </div>
 
             {{-- Report Sections --}}

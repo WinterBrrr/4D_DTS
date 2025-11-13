@@ -279,6 +279,10 @@ Route::middleware('web')->group(function () {
             $dateFilter = null;
         }
 
+        $departmentFilter = $department !== 'all' ? $department : null;
+        $createdFrom = $dateFilter ? $dateFilter[0] : null;
+        $createdTo = $dateFilter ? $dateFilter[1] : null;
+
         $docQuery = \App\Models\Document::query();
         if ($dateFilter) {
             $docQuery->whereBetween('created_at', $dateFilter);
@@ -288,48 +292,30 @@ Route::middleware('web')->group(function () {
         }
         $totalDocs = $docQuery->count();
 
-        $avgDays = 0;
-        try {
-            $completedQuery = \App\Models\Document::where('status', 'completed');
-            if ($dateFilter) {
-                $completedQuery->whereBetween('created_at', $dateFilter);
-            }
-            if ($department && $department !== 'all') {
-                $completedQuery->where('department', $department);
-            }
-            $avgSeconds = $completedQuery
+        $avgDays = Document::where('status', 'completed')
+                ->when($departmentFilter, fn($q) => $q->where('department', $departmentFilter))
+                ->when($createdFrom, fn($q) => $q->whereBetween('created_at', [$createdFrom, $createdTo]))
                 ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, created_at, updated_at)) as avg_seconds')
                 ->value('avg_seconds');
-            if ($avgSeconds) {
-                $avgDays = round(((float)$avgSeconds) / 86400, 1);
-            }
-        } catch (\Throwable $e) {
-            $avgDays = 0;
-        }
+            $avgDays = $avgDays ? round(((float)$avgDays) / 86400, 1) : 0;
 
-        // Month-over-month change is not filtered by date range, but can be filtered by department
-        $thisMonthQuery = \App\Models\Document::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]);
-        $lastMonthQuery = \App\Models\Document::whereBetween('created_at', [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()]);
-        if ($department && $department !== 'all') {
-            $thisMonthQuery->where('department', $department);
-            $lastMonthQuery->where('department', $department);
-        }
-        $thisMonth = $thisMonthQuery->count();
-        $lastMonth = $lastMonthQuery->count();
-        $monthChange = '0%';
-        if ($lastMonth > 0) {
-            $pct = round((($thisMonth - $lastMonth) / $lastMonth) * 100);
-            $monthChange = ($pct >= 0 ? '+' : '') . $pct . '%';
-        }
+            $thisMonth = Document::query()
+                ->when($departmentFilter, fn($q) => $q->where('department', $departmentFilter))
+                ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->count();
 
-        $activeUsersQuery = \App\Models\ActivityLog::where('created_at', '>=', now()->subDays(30));
-        if ($department && $department !== 'all') {
-            // Join with users to filter by department
-            $activeUsersQuery->whereHas('user', function($q) use ($department) {
-                $q->where('department', $department);
-            });
-        }
-        $activeUsers = $activeUsersQuery->distinct('user_id')->count('user_id');
+            $lastMonth = Document::query()
+                ->when($departmentFilter, fn($q) => $q->where('department', $departmentFilter))
+                ->whereBetween('created_at', [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()])
+                ->count();
+
+            $monthChange = $lastMonth > 0 ? round((($thisMonth - $lastMonth) / $lastMonth) * 100) . '%' : '0%';
+
+            $activeUsers = ActivityLog::query()
+                ->when($departmentFilter, fn($q) => $q->whereHas('user.profile', fn($uq) => $uq->where('department', $departmentFilter)))
+                ->when($createdFrom, fn($q) => $q->whereBetween('created_at', [$createdFrom, $createdTo]))
+                ->distinct('user_id')
+                ->count('user_id');
 
         $totals = [
             'documents' => $totalDocs,
@@ -338,15 +324,25 @@ Route::middleware('web')->group(function () {
             'active_users' => $activeUsers,
         ];
 
-        $statusQuery = \App\Models\Document::query();
-        if ($dateFilter) {
-            $statusQuery->whereBetween('created_at', $dateFilter);
-        }
-        if ($department && $department !== 'all') {
-            $statusQuery->where('department', $department);
-        }
-        $rawStatus = $statusQuery->select('status', DB::raw('COUNT(*) as c'))
-            ->groupBy('status')->pluck('c', 'status');
+        $rawStatus = Document::select('status', DB::raw('COUNT(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $statusCounts = Document::select('status', DB::raw('COUNT(*) as count'))
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $departmentCounts = Document::select('department', DB::raw('COUNT(*) as count'))
+            ->groupBy('department')
+            ->pluck('count', 'department');
+
+        $recent = Document::orderBy('updated_at', 'desc')
+            ->limit(5)
+            ->get(['title', 'department', 'status', 'updated_at']);
+
+        Log::info('Query results:', ['statusCounts' => $statusCounts, 'departmentCounts' => $departmentCounts, 'recent' => $recent]);
+
         $labelMap = [
             'pending' => 'Pending',
             'reviewing' => 'Under Review',
@@ -402,6 +398,8 @@ Route::middleware('web')->group(function () {
                 'user' => '-',
             ];
         })->toArray();
+        Log::info('Filters applied:', ['departmentFilter' => $departmentFilter, 'createdFrom' => $createdFrom, 'createdTo' => $createdTo]);
+        Log::info('Query results:', ['totals' => $totals, 'statusCounts' => $statusCounts, 'departmentCounts' => $departmentCounts, 'recent' => $recent]);
         return view('auditor.reports', compact('totals', 'statusCounts', 'departmentCounts', 'recent', 'colors'));
     })->name('auditor.reports');
     // Auditor: view all users (read-only)
@@ -435,20 +433,31 @@ Route::middleware('web')->group(function () {
     })->name('auditor.profile.show');
     // Handler document actions
     // Auditor dashboard route
-    Route::get('/auditor/dashboard', function (Request $request) {
-        // Example stats and recent activity for auditor dashboard
+    Route::get('/auditor/dashboard', function () {
+        // Admin-level access
         $stats = [
-            'total' => \App\Models\Document::count(),
-            'pending' => \App\Models\Document::where('status', 'pending')->count(),
-            'completed' => \App\Models\Document::where('status', 'completed')->count(),
+            'total' => Document::count(),
+            'pending' => Document::where('status', 'pending')->count(),
+            'reviewing' => Document::where('status', 'reviewing')->count(),
+            'approved' => Document::where('status', 'approved')->count(),
+            'rejected' => Document::where('status', 'rejected')->count(),
         ];
-        $recentActivity = \App\Models\Document::orderByDesc('updated_at')->limit(3)->get()->map(function ($d) {
-            return [
-                'title' => $d->title ?? $d->code ?? 'Untitled',
-                'uploaded_at' => $d->updated_at ? $d->updated_at->diffForHumans() : '-',
-            ];
-        })->toArray();
-        return view('auditor.dashboard', compact('stats', 'recentActivity'));
+
+        $docs = Document::select('id', 'title', 'type', 'handler', 'department', 'status', 'expected_completion_at')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10); // Added pagination
+
+        $recentActivity = ActivityLog::latest('created_at')
+            ->take(5)
+            ->get()
+            ->map(function ($activity) {
+                return [
+                    'title' => $activity->action,
+                    'uploaded_at' => $activity->created_at ? $activity->created_at->diffForHumans() : '-',
+                ];
+            })->toArray();
+
+        return view('auditor.dashboard', compact('stats', 'docs', 'recentActivity'));
     })->name('auditor.dashboard');
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -514,7 +523,7 @@ Route::middleware('web')->group(function () {
             if (!$path || !Storage::disk('public')->exists($path)) {
                 abort(404);
             }
-            return Storage::disk('public')->response($path);
+            return response()->file(Storage::disk('public')->path($path));
         })->name('profile.photo.show');
 
         // Documents: export CSV
@@ -840,35 +849,40 @@ Route::middleware('web')->group(function () {
             return view('admin.upload');
         })->name('upload');
 
-        Route::get('/reports', function () {
-            // Totals
-            $totalDocs = Document::count();
+        Route::get('/reports', function (Request $request) {
+            $departmentFilter = $request->get('department_filter', null);
+            $createdFrom = $request->get('created_from', null);
+            $createdTo = $request->get('created_to', null);
 
-            // Average process time in days for completed docs
-            $avgDays = 0;
-            try {
-                $avgSeconds = Document::where('status', 'completed')
-                    ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, created_at, updated_at)) as avg_seconds')
-                    ->value('avg_seconds');
-                if ($avgSeconds) {
-                    $avgDays = round(((float)$avgSeconds) / 86400, 1);
-                }
-            } catch (\Throwable $e) {
-                $avgDays = 0;
-            }
+            $totalDocs = Document::query()
+                ->when($departmentFilter, fn($q) => $q->where('department', $departmentFilter))
+                ->when($createdFrom, fn($q) => $q->whereBetween('created_at', [$createdFrom, $createdTo]))
+                ->count();
 
-            // Month over month document count change
-            $thisMonth = Document::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->count();
-            $lastMonth = Document::whereBetween('created_at', [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()])->count();
-            $monthChange = '0%';
-            if ($lastMonth > 0) {
-                $pct = round((($thisMonth - $lastMonth) / $lastMonth) * 100);
-                $monthChange = ($pct >= 0 ? '+' : '') . $pct . '%';
-            }
+            $avgDays = Document::where('status', 'completed')
+                ->when($departmentFilter, fn($q) => $q->where('department', $departmentFilter))
+                ->when($createdFrom, fn($q) => $q->whereBetween('created_at', [$createdFrom, $createdTo]))
+                ->selectRaw('AVG(TIMESTAMPDIFF(SECOND, created_at, updated_at)) as avg_seconds')
+                ->value('avg_seconds');
+            $avgDays = $avgDays ? round(((float)$avgDays) / 86400, 1) : 0;
 
-            // Active users in the last 30 days from activity logs
-            $activeUsers = ActivityLog::where('created_at', '>=', now()->subDays(30))
-                ->distinct('user_id')->count('user_id');
+            $thisMonth = Document::query()
+                ->when($departmentFilter, fn($q) => $q->where('department', $departmentFilter))
+                ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->count();
+
+            $lastMonth = Document::query()
+                ->when($departmentFilter, fn($q) => $q->where('department', $departmentFilter))
+                ->whereBetween('created_at', [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()])
+                ->count();
+
+            $monthChange = $lastMonth > 0 ? round((($thisMonth - $lastMonth) / $lastMonth) * 100) : 0;
+
+            $activeUsers = ActivityLog::query()
+                ->when($departmentFilter, fn($q) => $q->whereHas('user.profile', fn($uq) => $uq->where('department', $departmentFilter)))
+                ->when($createdFrom, fn($q) => $q->whereBetween('created_at', [$createdFrom, $createdTo]))
+                ->distinct('user_id')
+                ->count('user_id');
 
             $totals = [
                 'documents' => $totalDocs,
@@ -877,51 +891,7 @@ Route::middleware('web')->group(function () {
                 'active_users' => $activeUsers,
             ];
 
-            // Status distribution
-            $rawStatus = Document::select('status', DB::raw('COUNT(*) as c'))
-                ->groupBy('status')->pluck('c', 'status');
-            $labelMap = [
-                'pending' => 'Pending',
-                'reviewing' => 'Under Review',
-                'final_processing' => 'Final Processing',
-                'completed' => 'Completed',
-            ];
-            $statusCounts = [];
-            foreach ($rawStatus as $k => $v) {
-                $label = $labelMap[$k] ?? ucfirst(str_replace('_', ' ', (string)$k));
-                $statusCounts[$label] = (int) $v;
-            }
-            ksort($statusCounts);
-            $colors = [
-                'Pending' => '#eab308',
-                'Under Review' => '#3b82f6',
-                'Final Processing' => '#a855f7',
-                'Completed' => '#22c55e',
-            ];
-
-            // Department counts (top 5)
-            $departmentCounts = Document::select('department', DB::raw('COUNT(*) as c'))
-                ->whereNotNull('department')
-                ->groupBy('department')
-                ->orderByDesc('c')
-                ->limit(5)
-                ->pluck('c', 'department')
-                ->toArray();
-
-            // Recent processing activity: last 5 updated documents
-            $recentDocs = Document::orderByDesc('updated_at')->limit(5)->get();
-            $recent = $recentDocs->map(function ($d) use ($labelMap) {
-                $label = $labelMap[$d->status] ?? ucfirst(str_replace('_', ' ', (string)$d->status));
-                return [
-                    'title' => $d->title ?? $d->code ?? 'Untitled',
-                    'department' => $d->department ?? '-',
-                    'status' => $label,
-                    'updated' => $d->updated_at ? $d->updated_at->diffForHumans() : '-',
-                    'user' => '-',
-                ];
-            })->toArray();
-
-            return view('admin.reports', compact('totals', 'statusCounts', 'departmentCounts', 'recent', 'colors'));
+            return view('admin.reports', compact('totals', 'departmentFilter', 'createdFrom', 'createdTo'));
         })->name('reports');
 
 

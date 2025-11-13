@@ -47,6 +47,9 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-emerald-50">
                             @forelse($documents as $doc)
+                                @if($tab === 'received' && $doc->handler !== auth()->user()->email)
+                                    @continue
+                                @endif
                                 <tr>
                                     <td class="px-3 py-2 text-sm text-gray-900">{{ $doc->id }}</td>
                                     <td class="px-3 py-2 text-sm text-gray-900">{{ $doc->title }}</td>

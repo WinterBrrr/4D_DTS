@@ -37,36 +37,35 @@
                         <div class="text-6xl font-extrabold drop-shadow-sm">{{ ($stats['approved'] ?? 0) + ($stats['rejected'] ?? 0) }}</div>
                     </div>
                 </div>
-                <!-- Last Accessed removed for auditor dashboard -->
             </div>
             <!-- Document List -->
             <div class="mt-6">
                 <h2 class="text-sm font-medium text-gray-600">Document List</h2>
                 <div class="mt-2 overflow-hidden rounded-3xl border border-emerald-100 bg-white shadow-sm">
-                    @php $docs = Session::get('uploaded_documents', []); @endphp
                     <table class="w-full text-sm">
                         <thead class="bg-emerald-50 text-emerald-700">
                             <tr>
                                 <th class="px-3 py-2 text-left">ID</th>
                                 <th class="px-3 py-2 text-left">Title</th>
                                 <th class="px-3 py-2 text-left">Type</th>
-                                <th class="px-3 py-2 text-left">Handler</th>
-                                <th class="px-3 py-2 text-left">Department</th>
+                                <th class="px-3 py-2 text-left">Owner</th>
+                                <th class="px-3 py-2 text-left">Sent To</th>
                                 <th class="px-3 py-2 text-left">Status</th>
-                                <th class="px-3 py-2 text-left">Expected Completion</th>
+                                <th class="px-3 py-2 text-left">Expected</th>
+                                <th class="px-3 py-2 text-left">Completed</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             @forelse($docs as $doc)
-                                <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{{ route('inspect', $doc['id']) }}'">
-                                    <td class="px-3 py-2">{{ $doc['id'] ?? '' }}</td>
-                                    <td class="px-3 py-2">{{ $doc['title'] ?? '' }}</td>
-                                    <td class="px-3 py-2">{{ $doc['type'] ?? '' }}</td>
-                                    <td class="px-3 py-2">{{ $doc['handler'] ?? '—' }}</td>
-                                    <td class="px-3 py-2">{{ $doc['department'] ?? '' }}</td>
+                                <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='/auditor/documents/{{ $doc->id }}'">
+                                    <td class="px-3 py-2">{{ $doc->id }}</td>
+                                    <td class="px-3 py-2">{{ $doc->title }}</td>
+                                    <td class="px-3 py-2">{{ $doc->type }}</td>
+                                    <td class="px-3 py-2">{{ $doc->handler ?? '—' }}</td>
+                                    <td class="px-3 py-2">{{ $doc->department }}</td>
                                     <td class="px-3 py-2">
                                         @php
-                                            $status = strtolower($doc['status'] ?? '');
+                                            $status = strtolower($doc->status);
                                             $badgeClass = [
                                                 'pending' => 'bg-amber-100 text-amber-700',
                                                 'reviewing' => 'bg-blue-100 text-blue-700',
@@ -85,18 +84,35 @@
                                             ][$status] ?? '';
                                         @endphp
                                         <span class="inline-flex items-center px-3 py-1 rounded-full font-semibold {{ $badgeClass }}">
-                                            {{ $statusSymbol }} {{ ucfirst($doc['status'] ?? '—') }}
+                                            {{ $statusSymbol }} {{ ucfirst($doc->status) }}
                                         </span>
                                     </td>
-                                    <td class="px-3 py-2">{{ $doc['expected_completion_at'] ?? '—' }}</td>
+                                    @php
+                                        $status = strtolower($doc->status);
+                                        $expected = '-';
+                                        $completed = '-';
+                                        if (in_array($status, ['pending', 'reviewing'])) {
+                                            if ($doc->expected_completion_at) {
+                                                $expected = \Carbon\Carbon::parse($doc->expected_completion_at)->format('M d, Y');
+                                            }
+                                            $completed = '-';
+                                        } elseif (in_array($status, ['approved', 'rejected'])) {
+                                            $completed = $doc->updated_at ? \Carbon\Carbon::parse($doc->updated_at)->format('M d, Y') : '-';
+                                        }
+                                    @endphp
+                                    <td class="px-3 py-2">{{ $expected }}</td>
+                                    <td class="px-3 py-2">{{ $completed }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-3 py-6 text-center text-gray-500">No documents found.</td>
+                                    <td colspan="8" class="px-3 py-6 text-center text-gray-500">No documents found.</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
+                    <div class="p-4">
+                        {{ $docs->links() }}
+                    </div>
                 </div>
             </div>
             <div class="mt-6 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-emerald-100">
